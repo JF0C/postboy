@@ -1,0 +1,104 @@
+﻿@using AntDesign
+@inject IMessageService Notification
+
+<Collapse>
+    <Panel Header="Headers">
+    @if (ModifyableHeaders is not null)
+    {
+        for (var k = 0; k < ModifyableHeaders.Count; k++)
+        {
+            var index = k;
+            var header = ModifyableHeaders[k];
+            <GridRow Gutter="16" Justify="left" Align="top">
+                <GridCol Span="2">
+                    <Input @bind-Value=header.Key OnChange=@((string str) => OnKeydownKey(index, str)) />
+                </GridCol>
+                <GridCol Span="5">
+                    <Input @bind-Value=header.Value OnChange=@((string str) => OnKeydownValue(index, str)) />
+                </GridCol>
+                <GridCol Span="1">
+                    <Button OnClick="() => Remove(header.Key)" Danger>
+                        -
+                    </Button>
+                </GridCol>
+            </GridRow>
+        }
+        <GridRow Gutter="16" Justify="left" Align="top">
+            <GridCol Span="2">
+                <Input @bind-Value=newKey />
+            </GridCol>
+            <GridCol Span="5">
+                <Input @bind-Value=newValue />
+            </GridCol>
+            <GridCol Span="1">
+                <Button OnClick="Add" Type="@ButtonType.Primary">
+                    +
+                </Button>
+            </GridCol>
+        </GridRow>
+    }
+    </Panel>
+</Collapse>
+
+@code {
+    [Parameter]
+    public Dictionary<string, string>? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<Dictionary<string, string>> ValueChanged { get; set; }
+
+    private List<(string Key, string Value)>? ModifyableHeaders 
+    {
+        get
+        {
+            return Value?.Select(kv => (kv.Key, kv.Value)).ToList();
+        }
+        set
+        {
+            try
+            {
+                var dict = value?.ToDictionary(t => t.Key, t => t.Value);
+                ValueChanged.InvokeAsync(dict);
+            }
+            catch (Exception ex)
+            {
+                Notification.Error(ex.Message);
+            }
+        } 
+    }
+
+    private string newKey = "", newValue = "";
+
+    private void Add()
+    {
+        if (ModifyableHeaders is not null && !string.IsNullOrEmpty(newKey) && !string.IsNullOrEmpty(newValue))
+        {
+            var header = (newKey, newValue);
+            var list = ModifyableHeaders;
+            list.Add(header);
+            ModifyableHeaders = list;
+            newKey = "";
+            newValue = "";
+        }
+    }
+
+    private void Remove(string key)
+    {
+        if (ModifyableHeaders is not null && !string.IsNullOrEmpty(key))
+        {
+            ModifyableHeaders = ModifyableHeaders.Where(t => t.Key != key).ToList();
+        }
+    }
+
+    private void OnKeydownKey(int index, string value)
+    {
+        if (ModifyableHeaders is null) return;
+        ModifyableHeaders[index] = (value, ModifyableHeaders[index].Value);
+    }
+
+    private void OnKeydownValue(int index, string value)
+    {
+        if (ModifyableHeaders is null) return;
+        ModifyableHeaders[index] = (value, ModifyableHeaders[index].Value);
+    }
+}

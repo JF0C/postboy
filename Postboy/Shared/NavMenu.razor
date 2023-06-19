@@ -1,0 +1,66 @@
+﻿@using Postboy.Data
+@using Postboy.Services
+@using AntDesign
+@inject IRequestStorageService RequestService
+
+<Menu
+    DefaultSelectedKeys=@(new[] { "1" })
+    DefaultOpenKeys=@(new[] { "home" })
+    Mode=@MenuMode.Inline>
+
+    <MenuItem Key="home" RouterLink="/">
+    <span>
+        <Icon Type="home"/>
+        <span>Home</span>
+    </span>
+    </MenuItem>
+    <SubMenu>
+        <TitleTemplate>
+            <span>
+                <Icon Type="unordered-list" />
+                <span>All Requests</span>
+            </span>
+        </TitleTemplate>
+        <ChildContent>
+            @if (Requests is null)
+            {
+                <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+            }
+            else
+            {
+                @foreach (var request in Requests)
+                {
+                    var link = $"/Request/{request.Name}";
+                    <MenuItem RouterLink=@link>
+                        <Icon Type="code"/>
+                        <Popover Content="@request.Name">
+                            <span>@request.Name</span>
+                        </Popover>
+                    </MenuItem>
+                }
+                <MenuItem RouterLink="Request">
+                    <Icon Type="plus"/>
+                    <span>New Request</span>
+                </MenuItem>
+            }
+        </ChildContent>
+    </SubMenu>
+</Menu>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private List<StoredRequest>? Requests;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Requests = await RequestService.GetAll();
+    }
+}

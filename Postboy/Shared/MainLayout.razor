@@ -1,0 +1,25 @@
+﻿@using AntDesign
+@inherits LayoutComponentBase
+
+<PageTitle>Postboy</PageTitle>
+
+<div class="page" style="height: 100%;">
+    <Layout>
+        <Header>
+            <Title Style="color:white;padding-top;20px">
+                Postboy
+            </Title>
+        </Header>
+        <Layout>
+            <Sider Style="background:white;" Width="300">
+                <NavMenu />
+            </Sider>
+            <Content Style="padding: 20px;">
+                @Body
+            </Content>
+        </Layout>
+        <Footer Style="text-align:center;">
+            Copyright 123
+        </Footer>
+    </Layout>
+</div>

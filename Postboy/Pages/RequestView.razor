@@ -1,0 +1,253 @@
+﻿@page "/Request/{name?}"
+@using Postboy.Data
+@using Postboy.Helpers;
+@using Postboy.Services
+@using AntDesign
+@using Newtonsoft.Json
+@inject NavigationManager Navigation
+@inject IRequestStorageService Storage
+@inject IMessageService Notification
+@inject IRequestExecutorService Executor
+
+@if (Name is not null)
+{
+    @if (Request is null)
+    {
+        <h3>Request</h3>
+    }
+    else
+    {
+        <h3>
+            <span style="display:@(_editTitle?"none":"");">
+                @Name
+            </span>
+            <Input Style=@(_editTitle?"":"display:none;") @bind-Value=Request.Name />
+            <Button OnClick="EditTitle">
+                <Icon Type="edit"/>
+            </Button>
+        </h3>
+    }
+}
+else
+{
+    <h3>
+        <Input @bind-Value=Request.Name Placeholder="enter request name"/>
+    </h3>
+}
+
+@if (Request is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="2">
+            <Select @bind-Value=Request.Method DataSource="Methods" />
+        </GridCol>
+        <GridCol Span="14">
+            <Input @bind-Value=Request.Url />
+        </GridCol>
+        <GridCol Span="2">
+            <Button OnClick="Execute" Type="@ButtonType.Primary">Run</Button>
+        </GridCol>
+    </GridRow>
+
+    <HeadersView @bind-Value=Request.Headers />
+
+    <Divider/>
+
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="2">
+            Body
+        </GridCol>
+        <GridCol Span="14">
+            <TextArea @bind-Value=Request.Body/>
+        </GridCol>
+    </GridRow>
+
+    <Divider/>
+
+    <GridRow Gutter="16" Justify="right">
+        <Button OnClick="Delete" Danger>Delete</Button>
+        <Button OnClick="SaveChanges">Save</Button>
+    </GridRow>
+}
+@if (_waitingForResponse)
+{
+    <br />
+    <h3>Response</h3>
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+}
+@if (Response is not null){
+    <br />
+    <h3>Response</h3>
+
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="2">
+            Statuscode
+        </GridCol>
+        <GridCol Span="3">
+            @Response.StatusCode
+        </GridCol>
+    </GridRow>
+
+    @if (Responsetext is not null)
+    {
+        <GridRow Gutter="16" Justify="left" Align="top">
+            <GridCol Span="2">
+                Body
+            </GridCol>
+            <GridCol Span="14">
+                <TextArea Rows="(uint)Responsetext.Split('\n').Length" @bind-Value=Responsetext ReadOnly />
+            </GridCol>
+        </GridRow>
+    }
+}
+
+
+@code {
+    [Parameter]
+    public string? Name { get; set; }
+
+    [Parameter]
+    public EventCallback TriggerMenuReload { get; set; }
+
+    private bool _editTitle;
+
+    private StoredRequest? Request { get; set; }
+
+    private HttpResponseMessage? Response { get; set; }
+
+    private string? Responsetext { get; set; }
+
+    private bool _waitingForResponse;
+
+    private List<HttpMethod> Methods = new()
+    {
+        HttpMethod.Get,
+        HttpMethod.Post,
+        HttpMethod.Put,
+        HttpMethod.Delete,
+        HttpMethod.Options,
+        HttpMethod.Patch,
+        HttpMethod.Head,
+        HttpMethod.Connect,
+        HttpMethod.Trace
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Name is null)
+        {
+            Request = new StoredRequest();
+        }
+        else
+        {
+            Request = await Storage.GetByName(Name);
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            await SaveChangesUnsafe();
+        }
+        catch (Exception ex)
+        {
+            Notification.Error(ex.Message);
+        }
+    }
+
+    private async Task SaveChangesUnsafe()
+    {
+        if (Name is null)
+        {
+            await Storage.Create(Request);
+            Navigation.NavigateTo($"/Request/{Request.Name}");
+            Notification.Success("Request created!");
+        }
+        else
+        {
+            await Storage.Update(Request);
+            Notification.Success("Changes saved!");
+        }
+    }
+
+    private async Task Delete()
+    {
+        try
+        {
+            var name = Request.Name;
+            await Storage.Delete(Request.Id);
+            Navigation.NavigateTo("/");
+            Notification.Success($"Deleted request {name}");
+        }
+        catch (Exception ex)
+        {
+            Notification.Error(ex.Message);
+        }
+    }
+
+    private async Task Execute()
+    {
+        _waitingForResponse = true;
+        try
+        {
+            Response = await Executor.Execute(Request);
+            var content = await Response.Content.ReadAsStringAsync();
+            if (IsValidJson(content))
+            {
+                Responsetext = JsonHelper.FormatJson(content);
+            }
+            else
+            {
+                Responsetext = content;
+            }
+            _waitingForResponse = false;
+        }
+        catch (Exception ex)
+        {
+            Notification.Error(ex.Message);
+            _waitingForResponse = false;
+        }
+        finally
+        {
+            _waitingForResponse = false;
+        }
+    }
+
+    private bool IsValidJson(string str)
+    {
+        try
+        {
+            dynamic parsedJson = JsonConvert.DeserializeObject(str);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private async Task EditTitle()
+    {
+        _editTitle = !_editTitle;
+        if (!_editTitle)
+        {
+            try
+            {
+                await SaveChangesUnsafe();
+                Navigation.NavigateTo($"Request/{Request.Name}");
+                TriggerMenuReload.InvokeAsync();
+            }
+            catch (Exception ex)
+            {
+                Notification.Error(ex.Message);
+                Request.Name = Name;
+                Navigation.NavigateTo($"Request/{Name}");
+            }
+        }
+    }
+}

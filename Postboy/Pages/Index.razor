@@ -1,0 +1,34 @@
+﻿@page "/"
+@using Postboy.Data;
+@using Postboy.Services;
+@inject IRequestStorageService RequestService;
+
+<PageTitle>Home</PageTitle>
+
+<h1>All Requests</h1>
+
+@if (Requests is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @foreach (var request in Requests)
+    {
+        <p>
+            <a href="/Request/@(request.Name)">@request.Name</a>
+        </p>
+    }
+    <p>
+        <a href="/Request/">[Create new]</a>
+    </p>
+}
+
+@code{
+    private List<StoredRequest>? Requests;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Requests = await RequestService.GetAll();
+    }
+}
