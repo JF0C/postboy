@@ -10,22 +10,22 @@
 
 @if (Requests is null)
 {
-    <p>Loading...</p>
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
 }
 else
 {
+    <Button OnClick="CreateNew">
+        <span>
+            <Icon Type="plus" />
+            <span>Create new Request</span>
+        </span>
+    </Button>
     @foreach (var request in Requests)
     {
         <p>
             <a href="/Request/@(request.Name)">@request.Name</a>
         </p>
     }
-    <Button OnClick="CreateNew">
-        <span>
-            <Icon Type="plus"/>
-            <span>Create new Request</span>
-        </span>
-    </Button>
 }
 
 @code{
