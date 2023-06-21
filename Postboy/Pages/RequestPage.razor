@@ -41,6 +41,12 @@
                                     <span>Save</span>
                                 </span>
                             </MenuItem>
+                            <MenuItem OnClick=@(() => AddToFolder(Request.Id))>
+                                <span>
+                                    <Icon Type="folder-add" />
+                                    <span>Add to folder</span>
+                                </span>
+                            </MenuItem>
                             <MenuItem OnClick="Delete">
                                 <span>
                                     <Icon Type="delete"/>
@@ -162,7 +168,7 @@ else
         </GridRow>
     }
 }
-
+<AddFolderToRequestModal @ref=_addFolder/>
 
 @code {
     [Parameter]
@@ -179,6 +185,8 @@ else
     private bool _waitingForResponse;
 
     private Timer? _autoSaveTimer;
+
+    private AddFolderToRequestModal? _addFolder;
 
     private readonly List<HttpMethod> Methods = new()
     {
@@ -281,6 +289,18 @@ else
         {
             Notification.Error(ex.Message);
         }
+    }
+
+    private async Task AddToFolder(Guid requestId)
+    {
+        if (_addFolder is null) return;
+        _addFolder.Done = new EventCallback<Guid?>(this, async (Guid? folderId) =>
+        {
+            if (folderId is null) return;
+            await Storage.AddRequestToFolder(folderId.Value, requestId);
+            Interaction.Notify("menuchanged");
+        });
+        _addFolder.Show();
     }
 
     private async Task Execute()

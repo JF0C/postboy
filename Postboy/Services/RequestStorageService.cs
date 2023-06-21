@@ -6,32 +6,37 @@ namespace Postboy.Services
 {
     public class RequestStorageService : IRequestStorageService
     {
+        private AppState? _appState;
         public RequestStorageService()
         {
-
         }
 
-        private async Task<AppState> ReadState()
+        private async Task<AppState> ReadState(bool force = false)
         {
-            using var file = File.OpenRead("appstate.json");
-            using var fileStream = new StreamReader(file);
-            var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
-            foreach(var r in state.Requests)
+            if (_appState is null || force)
             {
-                r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                using var file = File.OpenRead("appstate.json");
+                using var fileStream = new StreamReader(file);
+                var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
+                foreach (var r in state.Requests)
+                {
+                    r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                }
+                fileStream.Close();
+                file.Close();
+                if (state is null)
+                {
+                    throw new Exception("appstate.json invalid");
+                }
+                _appState = state;
             }
-            fileStream.Close();
-            file.Close();
-            if (state is null)
-            {
-                throw new Exception("appstate.json invalid");
-            }
-            return state;
+            return _appState;
         }
 
         private async Task WriteState(AppState state)
         {
             await File.WriteAllTextAsync("appstate.json", JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
+            _appState = await ReadState(true);
         }
 
         public async Task<bool> Create(StoredRequest request)
@@ -213,6 +218,24 @@ namespace Postboy.Services
                 if (result is not null) return result;
             }
             return null;
+        }
+
+        public async Task<List<Folder>> GetFoldersFlat()
+        {
+            var state = await ReadState();
+            var result = new List<Folder>();
+            return AggregateFolders(result, state.RootFolder);
+        }
+
+        private List<Folder> AggregateFolders(List<Folder> folders, Folder current)
+        {
+            folders.AddRange(current.Folders);
+            foreach(var folder in current.Folders)
+            {
+                folder.Parent = current;
+                folders = AggregateFolders(folders, folder);
+            }
+            return folders;
         }
     }
 }

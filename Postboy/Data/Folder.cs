@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Text.Json.Serialization;
 
 namespace Postboy.Data
 {
@@ -9,5 +10,9 @@ namespace Postboy.Data
         public List<Folder> Folders { get; set; } = new();
         public List<Guid> RequestIds { get; set; } = new();
         public bool IsOpen { get; set; }
+        [JsonIgnore]
+        public Folder? Parent { get; set; }
+        [JsonIgnore]
+        public string Path => $"{Parent?.Path}/{Name}";
     }
 }

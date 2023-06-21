@@ -11,6 +11,7 @@ namespace Postboy.Services
         Task<bool> Update(StoredRequest request);
 
         Task<Folder> GetFolders();
+        Task<List<Folder>> GetFoldersFlat();
         Task<Folder> CreateFolder(Guid parent, string name);
         Task<bool> AddRequestToFolder(Guid folderId, Guid requestId);
         Task<bool> DeleteFolder(Guid folderId);
