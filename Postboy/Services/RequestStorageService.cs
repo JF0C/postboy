@@ -1,5 +1,6 @@
 ﻿using AntDesign;
 using Postboy.Data;
+using Postboy.Helpers;
 using System.Text.Json;
 
 namespace Postboy.Services
@@ -15,20 +16,28 @@ namespace Postboy.Services
         {
             if (_appState is null || force)
             {
-                using var file = File.OpenRead("appstate.json");
-                using var fileStream = new StreamReader(file);
-                var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
-                foreach (var r in state.Requests)
+                try
                 {
-                    r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                    using var file = File.OpenRead("appstate.json");
+                    using var fileStream = new StreamReader(file);
+                    var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
+                    foreach (var r in state.Requests)
+                    {
+                        r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                    }
+                    fileStream.Close();
+                    file.Close();
+                    if (state is null)
+                    {
+                        throw new Exception("appstate.json invalid");
+                    }
+                    _appState = state;
                 }
-                fileStream.Close();
-                file.Close();
-                if (state is null)
+                catch (Exception ex)
                 {
-                    throw new Exception("appstate.json invalid");
+                    _appState = AppStateInitializer.InitializeAppState();
+                    await WriteState(_appState);
                 }
-                _appState = state;
             }
             return _appState;
         }
