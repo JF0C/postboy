@@ -1,9 +1,26 @@
 ﻿@using System.Web;
 @using System.Linq;
+@using Postboy.Helpers;
 
 @if (Value is not null)
 {
-    
+    for (var idx = 0; idx < _formData.Count; idx++)
+    {
+        var kv = _formData[idx];
+        <GridRow Gutter="16" Justify="left" Align="top">
+            <GridCol Span="2">
+                <Input @bind-Value=kv.key OnChange=@((string v) => OnChange())/>
+            </GridCol>
+            <GridCol Span="5">
+                <Input @bind-Value=kv.value OnChange=@((string v) => OnChange())/>
+            </GridCol>
+            <GridCol Span="1">
+                <Button OnClick="() => {_formData.Remove(kv); OnChange();}" Danger>
+                    -
+                </Button>
+            </GridCol>
+        </GridRow>
+    }
 }
 
 @code {
@@ -13,17 +30,24 @@
     [Parameter]
     public EventCallback<string> ValueChanged { get; set; }
 
-    private List<KeyValuePair<string, string>> _formData = new();
+    private List<(string key, string value)> _formData = new();
 
-    private string Encode()
+    protected override Task OnParametersSetAsync()
     {
-        var content = new FormUrlEncodedContent(_formData);
-        return content.ReadAsStringAsync().GetAwaiter().GetResult();
+        try
+        {
+            _formData = ContentConversion.StringToKeyValuePairs(Value).Select(kv => (kv.Key, kv.Value)).ToList();
+        }
+        catch (Exception)
+        {
+            _formData = new();
+        }
+        return base.OnParametersSetAsync();
     }
 
-    private void Decode(string rawFormData)
+    private void OnChange()
     {
-        throw new NotImplementedException();
-        //_formData = HttpUtility.ParseQueryString(rawFormData).GetEnumerator().Select(kv => new KeyValuePair<string, string>(kv.Name, kv.Value)).ToList();
+        var value = ContentConversion.KeyValuePairsToUrlEncodedString(_formData.Select(t => new KeyValuePair<string, string>(t.key, t.value)));
+        ValueChanged.InvokeAsync(value);
     }
 }
