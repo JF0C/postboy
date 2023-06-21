@@ -1,0 +1,47 @@
+﻿@inject IRequestStorageService Storage
+
+<Modal
+    Title="Select Request"
+    Visible=_visible
+    OnCancel=@(args => Finish(true))
+    OnOk=@(args => Finish(false))
+>
+    <Select TItemValue="Guid"
+        TItem="StoredRequest"
+        LabelName="@nameof(StoredRequest.Name)"
+        ValueName="@nameof(StoredRequest.Id)"
+        DataSource="_requests"
+        @bind-Value=_result
+    />
+</Modal>
+
+@code {
+    [Parameter]
+    public EventCallback<Guid?> Done { get; set; }
+    private List<StoredRequest>? _requests;
+    private Guid _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _requests = await Storage.GetAll();
+        await base.OnInitializedAsync();
+    }
+
+    private bool _visible;
+    public void Show()
+    {
+        _visible = true;
+        StateHasChanged();
+    }
+    private void Finish(bool cancel)
+    {
+        if (cancel)
+        {
+            Done.InvokeAsync(null);
+            _visible = false;
+            return;
+        }
+        _visible = false;
+        Done.InvokeAsync(_result);
+    }
+}

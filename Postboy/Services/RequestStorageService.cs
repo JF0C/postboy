@@ -1,4 +1,5 @@
-﻿using Postboy.Data;
+﻿using AntDesign;
+using Postboy.Data;
 using System.Text.Json;
 
 namespace Postboy.Services
@@ -94,6 +95,111 @@ namespace Postboy.Services
             current.ContentTypeString = StoredRequestContentType.Serialize(request.ContentType);
             await WriteState(state);
             return true;
+        }
+
+        public async Task<Folder> GetFolders()
+        {
+            return (await ReadState()).RootFolder;
+        }
+
+        public async Task<Folder> CreateFolder(Guid parent, string name)
+        {
+            var state = await ReadState();
+            var folder = new Folder { Name = name };
+            var parentFolder = FindFolderRecursively(state.RootFolder, parent);
+            if (parentFolder is null)
+            {
+                throw new Exception($"Folder {parent} not found!");
+            }
+            parentFolder.Folders.Add(folder);
+            await WriteState(state);
+            return folder;
+        }
+
+        public async Task<bool> AddRequestToFolder(Guid folderId, Guid requestId)
+        {
+            var state = await ReadState();
+            var parent = FindFolderRecursively(state.RootFolder, folderId);
+            var request = state.Requests.FirstOrDefault(r => r.Id == requestId);
+            if (parent is null)
+            {
+                throw new Exception($"Folder {folderId} not found!");
+            }
+            if (request is null)
+            {
+                throw new Exception($"Request {requestId} not found!");
+            }
+            parent.RequestIds.Add(requestId);
+            await WriteState(state);
+            return true;
+        }
+
+        public async Task<bool> DeleteFolder(Guid folderId)
+        {
+            var state = await ReadState();
+            var folder = FindFolderRecursively(state.RootFolder, folderId);
+            var parent = FindParentFolderRecursively(state.RootFolder, folderId);
+            if (folder is null)
+            {
+                throw new Exception($"Cannot find folder {folderId}");
+            }
+            if (parent is null)
+            {
+                throw new Exception($"Parent of folder {folderId} cannot be found");
+            }
+            parent.Folders.Remove(folder);
+            await WriteState(state);
+            return true;
+        }
+
+        public async Task<bool> RenameFolder(Guid folderId, string name)
+        {
+            var state = await ReadState();
+            var folder = FindFolderRecursively(state.RootFolder, folderId);
+            if (folder is null)
+            {
+                throw new Exception($"Folder {folderId} not found!");
+            }
+            folder.Name = name;
+            await WriteState(state);
+            return true;
+        }
+
+        public async Task<bool> RemoveRequestFromFolder(Guid folderId, Guid requestId)
+        {
+            var state = await ReadState();
+            var folder = FindFolderRecursively(state.RootFolder, folderId);
+            if (folder is null)
+            {
+                throw new Exception($"Folder {folderId} not found!");
+            }
+            if (folder.RequestIds.Any(id => id == requestId))
+            {
+                folder.RequestIds.Remove(requestId);
+                return true;
+            }
+            throw new Exception($"Folder {folderId} does not contain the request {requestId}");
+        }
+
+        private Folder? FindFolderRecursively(Folder root, Guid id)
+        {
+            if (root.Id == id) return root;
+            foreach(var folder in root.Folders)
+            {
+                var result = FindFolderRecursively(folder, id);
+                if (result is not null) return result;
+            }
+            return null;
+        }
+        private Folder? FindParentFolderRecursively(Folder root, Guid id)
+        {
+            if (root.Folders.Any(f => f.Id == id) || root.RequestIds.Any(r => r == id)) return root;
+            foreach(var folder in root.Folders)
+            {
+                var result = FindParentFolderRecursively(folder, id);
+                if (result is not null) return result;
+            }
+            return null;
         }
     }
 }

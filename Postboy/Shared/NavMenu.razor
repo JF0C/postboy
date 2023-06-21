@@ -1,4 +1,6 @@
-﻿@inject IRequestStorageService RequestService
+﻿@using Postboy.Views
+
+@inject IRequestStorageService RequestService
 @inject IComponentInteractionService Interaction
 
 <Menu
@@ -43,12 +45,15 @@
             }
         </ChildContent>
     </SubMenu>
+    <FoldersView Folder="RootFolder"/>
 </Menu>
 
 @code {
     private bool collapseNavMenu = true;
 
     private List<StoredRequest>? Requests;
+
+    private Folder? RootFolder;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -59,6 +64,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        RootFolder = await RequestService.GetFolders();
         Requests = await RequestService.GetAll();
         Interaction.Subscribe("menuchanged", async () =>
         {

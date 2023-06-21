@@ -1,0 +1,36 @@
+﻿
+
+<Modal
+    Title="Foldername"
+    Visible=_visible
+    OnCancel=@(args => Finish(true))
+    OnOk=@(args => Finish(false))
+>
+    <Input @bind-Value=_name />
+</Modal>
+
+@code {
+    [Parameter]
+    public EventCallback<string> Done { get; set; }
+
+    private string? _name = "new folder";
+    private bool _visible;
+    public void Show(string? name)
+    {
+        if (name is not null)
+        {
+            _name = name;
+        }
+        _visible = true;
+        StateHasChanged();
+    }
+    private void Finish(bool cancel)
+    {
+        if (cancel)
+        {
+            _name = null;
+        }
+        _visible = false;
+        Done.InvokeAsync(_name);
+    }
+}

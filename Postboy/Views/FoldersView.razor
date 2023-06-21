@@ -1,0 +1,153 @@
+﻿@inject IRequestStorageService Storage
+@inject ModalService Modal
+
+<SubMenu IsOpen=@(Folder?.IsOpen ?? false) @ref=_subMenu>
+    <TitleTemplate>
+        @if(Folder is null)
+        {
+            <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+        }
+        else
+        {
+            <span>
+                <Icon Type=@(_subMenu.IsOpen ? "folder-open" : "folder")/>
+                <span>@(Level == 0 ? "Folders" : Folder.Name)</span>
+                <Dropdown>
+                    <Overlay>
+                        <Menu>
+                            <MenuItem OnClick="EditTitle">
+                                <span>
+                                    <Icon Type="edit" />
+                                    <span>Edit Name</span>
+                                </span>
+                            </MenuItem>
+                            @if (Level < 2)
+                            {
+                                <MenuItem OnClick="@(() => AddFolder(Folder.Id))">
+                                    <span>
+                                        <Icon Type="plus-square" />
+                                        <span>Add Folder</span>
+                                    </span>
+                                </MenuItem>
+                            }
+                            <MenuItem OnClick="@(() => AddRequest(Folder.Id))">
+                                <span>
+                                    <Icon Type="plus" />
+                                    <span>Add Request</span>
+                                </span>
+                            </MenuItem>
+                            @if (Level > 0)
+                            {
+                                <MenuItem OnClick="@(() => Delete(Folder.Id))">
+                                    <span>
+                                        <Icon Type="delete" />
+                                        <span>Delete</span>
+                                    </span>
+                                </MenuItem>
+                            }
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <Button Size="@ButtonSize.Small">
+                            <Icon Type="more" />
+                        </Button>
+                    </ChildContent>
+                </Dropdown>
+            </span>
+        }
+    </TitleTemplate>
+    <ChildContent>
+        @if(Folder is null)
+        {
+            <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+        }
+        else
+        {
+            @foreach (var subfoler in Folder.Folders)
+            {
+                <FoldersView Folder="subfoler" Level="@(Level+1)"/>
+            }
+            @foreach (var rid in Folder.RequestIds)
+            {
+                var request = Storage.GetById(rid).GetAwaiter().GetResult();
+                @if (request is not null)
+                {
+                    var link = $"/Request/{request.Name}";
+                    <MenuItem RouterLink=@link>
+                        <Icon Type="code"/>
+                        <Popover Content="@request.Name">
+                            <span>@request.Name</span>
+                        </Popover>
+                    </MenuItem>
+                }
+            }
+        }
+    </ChildContent>
+</SubMenu>
+
+<EditFoldernameModal @ref=_folderName />
+<AddRequestToFolderModal @ref=_addRequest />
+
+@code {
+    [Parameter]
+    public Folder? Folder { get; set; }
+
+    [Parameter]
+    public int Level { get; set; }
+
+    private SubMenu? _subMenu;
+
+    private EditFoldernameModal? _folderName;
+
+    private AddRequestToFolderModal? _addRequest;
+
+    private async Task EditTitle()
+    {
+        if (_folderName is null) return;
+        _folderName.Done = new EventCallback<string>(this, async (string name) =>
+        {
+            if (name is null) return;
+            await Storage.RenameFolder(Folder.Id, name);
+            StateHasChanged();
+        });
+        _folderName.Show(Folder.Name);
+    }
+    private async Task AddFolder(Guid folderId)
+    {
+        if (_folderName is null) return;
+        _folderName.Done = new EventCallback<string>(this, async (string name) =>
+        {
+            if (name is null) return;
+            await Storage.CreateFolder(folderId, name);
+            StateHasChanged();
+        });
+        _folderName.Show("new folder");
+    }
+    private async Task Delete(Guid folderId)
+    {
+        if (await Modal.ConfirmAsync(new ConfirmOptions
+            {
+                Title = "Delete Folder",
+                Content = $"Are you sure, that you want to delete the folder {Folder?.Name} and all its contents?"
+            }))
+        {
+            await Storage.DeleteFolder(Folder.Id);
+            StateHasChanged();
+        }
+    }
+    private async Task AddRequest(Guid folderId)
+    {
+        if (_addRequest is null) return;
+        _addRequest.Done = new EventCallback<Guid?>(this, async (Guid? id) =>
+        {
+            if (id is null) return;
+            await Storage.AddRequestToFolder(folderId, id.Value);
+            StateHasChanged();
+        });
+        _addRequest.Show();
+    }
+    private async Task RemoveRequest(Guid folderId, Guid requestId)
+    {
+        await Storage.RemoveRequestFromFolder(folderId, requestId);
+    }
+}
