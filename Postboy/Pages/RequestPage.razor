@@ -1,14 +1,15 @@
 ﻿@page "/Request/{name?}"
 @using Postboy.Data
 @using Postboy.Data.ContentTypes;
-@using Postboy.Helpers;
-@using Postboy.Services
-@using AntDesign
 @using Newtonsoft.Json
+@using Postboy.Views
+@using Postboy.Helpers
 @inject NavigationManager Navigation
 @inject IRequestStorageService Storage
 @inject IMessageService Notification
 @inject IRequestExecutorService Executor
+@inject IComponentInteractionService Interaction
+@inject ModalService Modal
 
 @if (Name is not null)
 {
@@ -23,9 +24,44 @@
                 @Name
             </span>
             <Input Style=@(_editTitle?"":"display:none;") @bind-Value=Request.Name />
-            <Button OnClick="EditTitle">
-                <Icon Type="edit"/>
-            </Button>
+            @if (!_editTitle)
+            {
+                <Dropdown>
+                    <Overlay>
+                        <Menu>
+                            <MenuItem OnClick="EditTitle">
+                                <span>
+                                    <Icon Type="edit" />
+                                    <span>Edit Name</span>
+                                </span>
+                            </MenuItem>
+                            <MenuItem OnClick="SaveChanges">
+                                <span>
+                                    <Icon Type="save" />
+                                    <span>Save</span>
+                                </span>
+                            </MenuItem>
+                            <MenuItem OnClick="Delete">
+                                <span>
+                                    <Icon Type="delete"/>
+                                    <span>Delete</span>
+                                </span>
+                            </MenuItem>
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <Button>
+                            <Icon Type="more" />
+                        </Button>
+                    </ChildContent>
+                </Dropdown>
+            }
+            else
+            {
+                <Button OnClick="EditTitle">
+                    <Icon Type="check" />
+                </Button>
+            }
         </h3>
     }
 }
@@ -38,21 +74,26 @@ else
 
 @if (Request is null)
 {
-    <p>Loading...</p>
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
 }
 else
 {
-    <GridRow Gutter="16" Justify="left" Align="top">
-        <GridCol Span="2">
-            <Select @bind-Value=Request.Method DataSource="Methods" />
-        </GridCol>
-        <GridCol Span="14">
-            <Input @bind-Value=Request.Url />
-        </GridCol>
-        <GridCol Span="2">
-            <Button OnClick="Execute" Type="@ButtonType.Primary">Run</Button>
-        </GridCol>
-    </GridRow>
+
+    <InputGroup>
+        <GridRow>
+            <GridCol Span="2">
+                <Select @bind-Value=Request.Method DataSource="Methods" Size="@InputSize.Large"/>
+            </GridCol>
+            <GridCol Span="10">
+                <Input @bind-Value=Request.Url Size="@InputSize.Large" />
+            </GridCol>
+            <GridCol Span="1">
+                <Button OnClick="Execute" Type="@ButtonType.Primary" Size="@InputSize.Large">
+                    <Icon Type="play-circle" />
+                </Button>
+            </GridCol>
+        </GridRow>
+    </InputGroup>
 
     <Collapse>
         <HeadersView @bind-Value=Request.Headers />
@@ -85,16 +126,9 @@ else
             }
             else if (Request.ContentType is ContentTypeFormEncoded)
             {
-                <TextArea @bind-Value=Request.Body/>
+                <FormUrlEncodedView @bind-Value=Request.Body/>
             }
         </GridCol>
-    </GridRow>
-
-    <Divider/>
-
-    <GridRow Gutter="16" Justify="right">
-        <Button OnClick="Delete" Danger>Delete</Button>
-        <Button OnClick="SaveChanges">Save</Button>
     </GridRow>
 }
 @if (_waitingForResponse)
@@ -134,10 +168,7 @@ else
     [Parameter]
     public string? Name { get; set; }
 
-    [Parameter]
-    public EventCallback TriggerMenuReload { get; set; }
-
-    private bool _editTitle;
+    private bool _editTitle, _deleting;
 
     private StoredRequest? Request { get; set; }
 
@@ -146,6 +177,8 @@ else
     private string? Responsetext { get; set; }
 
     private bool _waitingForResponse;
+
+    private Timer? _autoSaveTimer;
 
     private readonly List<HttpMethod> Methods = new()
     {
@@ -166,6 +199,20 @@ else
         StoredRequestContentType.Json,
         StoredRequestContentType.FormEncoded
     };
+
+    protected override Task OnInitializedAsync()
+    {
+        //_autoSaveTimer = new Timer(async (obj) => await SaveChanges(), new object(), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        Navigation.LocationChanged += async (object? sender, LocationChangedEventArgs args) =>
+        {
+            if (!_deleting && !args.Location.TrimEnd('/').EndsWith("Request"))
+            {
+                await SaveChanges();
+            }
+        };
+        _deleting = false;
+        return base.OnInitializedAsync();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -206,16 +253,29 @@ else
             await Storage.Update(Request);
             Notification.Success("Changes saved!");
         }
+        Interaction.Notify("menuchanged");
     }
 
     private async Task Delete()
     {
+        if (!await Modal.ConfirmAsync(new ConfirmOptions
+            {
+                Title = "Confirm Deletion",
+                Content = $"Are you sure, that you want to delete request {Request.Name}",
+                OkText = "Yes",
+                CancelText = "No"
+            }))
+        {
+            return;
+        }
         try
         {
+            _deleting = true;
             var name = Request.Name;
             await Storage.Delete(Request.Id);
             Navigation.NavigateTo("/");
             Notification.Success($"Deleted request {name}");
+            Interaction.Notify("menuchanged");
         }
         catch (Exception ex)
         {
@@ -226,6 +286,7 @@ else
     private async Task Execute()
     {
         _waitingForResponse = true;
+        await SaveChanges();
         try
         {
             Response = await Executor.Execute(Request);
@@ -273,7 +334,7 @@ else
             {
                 await SaveChangesUnsafe();
                 Navigation.NavigateTo($"Request/{Request.Name}");
-                TriggerMenuReload.InvokeAsync();
+                Interaction.Notify("menuchanged");
             }
             catch (Exception ex)
             {

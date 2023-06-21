@@ -1,4 +1,5 @@
 ﻿@inject IRequestStorageService RequestService
+@inject IComponentInteractionService Interaction
 
 <Menu
     DefaultSelectedKeys=@(new[] { "1" })
@@ -59,5 +60,10 @@
     protected override async Task OnInitializedAsync()
     {
         Requests = await RequestService.GetAll();
+        Interaction.Subscribe("menuchanged", async () =>
+        {
+            Requests = await RequestService.GetAll();
+            StateHasChanged();
+        });
     }
 }

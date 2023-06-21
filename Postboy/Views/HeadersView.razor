@@ -17,24 +17,28 @@
             </GridCol>
             <GridCol Span="1">
                 <Button OnClick="() => Remove(header.Key)" Danger>
-                    -
+                    <Icon Type="minus" />
                 </Button>
             </GridCol>
         </GridRow>
     }
     <GridRow Gutter="16" Justify="left" Align="top">
-        <GridCol Span="2">
-            <Input @bind-Value=newKey />
-        </GridCol>
-        <GridCol Span="5">
-            <Input @bind-Value=newValue />
-        </GridCol>
-        <GridCol Span="1">
-            <Button OnClick="Add" Type="@ButtonType.Primary">
-                +
-            </Button>
-        </GridCol>
+    <GridCol Span="2">
+        <Input @bind-Value=newKey />
+    </GridCol>
+    <GridCol Span="5">
+        <Input @bind-Value=newValue />
+    </GridCol>
+    <GridCol Span="1">
+        <Button OnClick="Add" Type="@ButtonType.Primary">
+            <Icon Type="plus" />
+        </Button>
+    </GridCol>
     </GridRow>
+}
+else
+{
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
 }
 </Panel>
 

@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Postboy.Data;
 using Postboy.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +8,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddAntDesign();
 builder.Services.AddSingleton<IRequestStorageService, RequestStorageService>();
 builder.Services.AddSingleton<IRequestExecutorService, RequestExecutorService>();
+builder.Services.AddSingleton<IComponentInteractionService, ComponentInteractionService>();
 
 var app = builder.Build();
 

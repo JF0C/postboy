@@ -10,10 +10,10 @@
         {
             <GridRow Gutter="16" Justify="left" Align="top">
                 <GridCol Span="3">
-                    <Input @bind-Value=header.Key />
+                    <Input @bind-Value=header.Key OnChange=@((string str) => Changed()) />
                 </GridCol>
                 <GridCol Span="3">
-                    <EnumSelect @bind-Value=header.Type />
+                    <EnumSelect @bind-Value=header.Type OnSelectedItemChanged=@((Enums.AutoHeaderType t) => Changed())/>
                 </GridCol>
                 <GridCol Span="3">
                     <Select TItemValue="Guid"
@@ -22,10 +22,11 @@
                         ValueName="@nameof(StoredRequest.Id)"
                         DataSource="_requests"
                         @bind-Value=header.RequestId
+                        OnSelectedItemChanged=@((r) => Changed())
                     />
                 </GridCol>
                 <GridCol Span="3">
-                    <Button OnClick="@(() => RemoveAutoHeader(header))">
+                    <Button Danger OnClick="@(() => RemoveAutoHeader(header))">
                         <Icon Type="minus"/>
                     </Button>
                 </GridCol>
@@ -47,11 +48,15 @@
                     @bind-Value=_newItem.RequestId />
             </GridCol>
             <GridCol Span="3">
-                <Button OnClick="AddAutoRequest">
+                <Button Type="@ButtonType.Primary" OnClick="AddAutoRequest">
                     <Icon Type="plus" />
                 </Button>
             </GridCol>
         </GridRow>
+    }
+    else
+    {
+        <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
     }
 </Panel>
 
@@ -70,6 +75,11 @@
     {
         _requests = await Storage.GetAll();
         await base.OnInitializedAsync();
+    }
+
+    private void Changed()
+    {
+        ValueChanged.InvokeAsync(Value);
     }
 
     private void AddAutoRequest()

@@ -15,6 +15,10 @@ namespace Postboy.Helpers
             var keyValuePairs = new List<KeyValuePair<string, string>>();
             foreach (string key in nameValueCollection)
             {
+                if (string.IsNullOrWhiteSpace(key) && string.IsNullOrWhiteSpace(nameValueCollection[key]))
+                {
+                    continue;
+                }
                 keyValuePairs.Add(new KeyValuePair<string, string>(key, nameValueCollection[key]));
             }
             return keyValuePairs;
@@ -25,9 +29,13 @@ namespace Postboy.Helpers
             var result = string.Empty;
             foreach(var kv in keyValuePairs)
             {
+                if (string.IsNullOrWhiteSpace(kv.Key) && string.IsNullOrWhiteSpace(kv.Value))
+                {
+                    continue;
+                }
                 result += HttpUtility.UrlEncode(kv.Key) + "=" + HttpUtility.UrlEncode(kv.Value) + "&";
             }
-            result.TrimEnd('&');
+            result = result.TrimEnd('&');
             return result;
         }
     }

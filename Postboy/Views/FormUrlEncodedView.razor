@@ -1,0 +1,103 @@
+﻿@using System.Web;
+@using System.Linq;
+@using Postboy.Helpers;
+@inject IMessageService Notification
+
+@if (Value is not null)
+{
+    for (var idx = 0; idx < _formData.Count; idx++)
+    {
+        var index = idx;
+        var kv = _formData[idx];
+        if (string.IsNullOrWhiteSpace(kv.key) && string.IsNullOrWhiteSpace(kv.value))
+        {
+            continue;
+        }
+        <GridRow Gutter="16" Justify="left" Align="top">
+            <GridCol Span="4">
+                <Input Placeholder="Key" @bind-Value=kv.key OnChange=@((string v) => OnInput(index, (v, kv.value)))/>
+            </GridCol>
+            <GridCol Span="10">
+                <Input Placeholder="Value" @bind-Value=kv.value OnChange=@((string v) => OnInput(index, (kv.key, v)))/>
+            </GridCol>
+            <GridCol Span="1">
+                <Button OnClick="() => RemoveEntry(kv)" Danger>
+                    <Icon Type="minus"/>
+                </Button>
+            </GridCol>
+        </GridRow>
+    } 
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="4">
+            <Input Placeholder="Key" @bind-Value=_newEntry.key/>
+        </GridCol>
+        <GridCol Span="10">
+            <Input Placeholder="Value" @bind-Value=_newEntry.value/>
+        </GridCol>
+        <GridCol Span="1">
+            <Button Type="@ButtonType.Primary" OnClick="AddEntry">
+                <Icon Type="plus" />
+            </Button>
+        </GridCol>
+    </GridRow>
+}
+else
+{
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+}
+
+@code 
+{
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private List<(string key, string value)> _formData = new();
+
+    private (string key, string value) _newEntry = (string.Empty, string.Empty);
+
+    protected override Task OnParametersSetAsync()
+    {
+        try
+        {
+            _formData = ContentConversion.StringToKeyValuePairs(Value).Select(kv => (kv.Key, kv.Value)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Notification.Warning(ex.Message);
+            _formData = new();
+        }
+        return base.OnParametersSetAsync();
+    }
+
+    private void OnInput(int idx, (string key, string value) t)
+    {
+        _formData[idx] = t;
+        OnChange();
+    }
+
+    private void OnChange()
+    {
+        var value = ContentConversion.KeyValuePairsToUrlEncodedString(_formData.Select(t => new KeyValuePair<string, string>(t.key, t.value)));
+        ValueChanged.InvokeAsync(value);
+    }
+
+    private void AddEntry()
+    {
+        if (string.IsNullOrWhiteSpace(_newEntry.key) && string.IsNullOrWhiteSpace(_newEntry.value))
+        {
+            return;
+        }
+        _formData.Add(new(_newEntry.key, _newEntry.value));
+        _newEntry = new(string.Empty, string.Empty);
+        OnChange();
+    }
+
+    private void RemoveEntry((string key, string value) kv)
+    {
+        _formData.Remove(kv); 
+        OnChange();
+    }
+}

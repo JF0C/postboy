@@ -30,7 +30,7 @@ namespace Postboy.Services
 
         private async Task WriteState(AppState state)
         {
-            await File.WriteAllTextAsync("appstate.json", JsonSerializer.Serialize(state));
+            await File.WriteAllTextAsync("appstate.json", JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
         }
 
         public async Task<bool> Create(StoredRequest request)

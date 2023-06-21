@@ -2,6 +2,7 @@
 @using Postboy.Data;
 @using Postboy.Services;
 @inject IRequestStorageService RequestService;
+@inject NavigationManager Navigation;
 
 <PageTitle>Home</PageTitle>
 
@@ -19,6 +20,12 @@ else
             <a href="/Request/@(request.Name)">@request.Name</a>
         </p>
     }
+    <Button OnClick="CreateNew">
+        <span>
+            <Icon Type="plus"/>
+            <span>Create new Request</span>
+        </span>
+    </Button>
 }
 
 @code{
@@ -27,5 +34,9 @@ else
     protected override async Task OnInitializedAsync()
     {
         Requests = await RequestService.GetAll();
+    }
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/Request/");
     }
 }
