@@ -1,44 +1,42 @@
 ﻿@using AntDesign
 @inject IMessageService Notification
 
-<Collapse>
-    <Panel Header="Headers">
-    @if (ModifyableHeaders is not null)
+<Panel Header="Headers">
+@if (ModifyableHeaders is not null)
+{
+    for (var k = 0; k < ModifyableHeaders.Count; k++)
     {
-        for (var k = 0; k < ModifyableHeaders.Count; k++)
-        {
-            var index = k;
-            var header = ModifyableHeaders[k];
-            <GridRow Gutter="16" Justify="left" Align="top">
-                <GridCol Span="2">
-                    <Input @bind-Value=header.Key OnChange=@((string str) => OnKeydownKey(index, str)) />
-                </GridCol>
-                <GridCol Span="5">
-                    <Input @bind-Value=header.Value OnChange=@((string str) => OnKeydownValue(index, str)) />
-                </GridCol>
-                <GridCol Span="1">
-                    <Button OnClick="() => Remove(header.Key)" Danger>
-                        -
-                    </Button>
-                </GridCol>
-            </GridRow>
-        }
+        var index = k;
+        var header = ModifyableHeaders[k];
         <GridRow Gutter="16" Justify="left" Align="top">
             <GridCol Span="2">
-                <Input @bind-Value=newKey />
+                <Input @bind-Value=header.Key OnChange=@((string str) => OnKeydownKey(index, str)) />
             </GridCol>
             <GridCol Span="5">
-                <Input @bind-Value=newValue />
+                <Input @bind-Value=header.Value OnChange=@((string str) => OnKeydownValue(index, str)) />
             </GridCol>
             <GridCol Span="1">
-                <Button OnClick="Add" Type="@ButtonType.Primary">
-                    +
+                <Button OnClick="() => Remove(header.Key)" Danger>
+                    -
                 </Button>
             </GridCol>
         </GridRow>
     }
-    </Panel>
-</Collapse>
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="2">
+            <Input @bind-Value=newKey />
+        </GridCol>
+        <GridCol Span="5">
+            <Input @bind-Value=newValue />
+        </GridCol>
+        <GridCol Span="1">
+            <Button OnClick="Add" Type="@ButtonType.Primary">
+                +
+            </Button>
+        </GridCol>
+    </GridRow>
+}
+</Panel>
 
 @code {
     [Parameter]

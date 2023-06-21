@@ -1,0 +1,29 @@
+﻿@using System.Web;
+@using System.Linq;
+
+@if (Value is not null)
+{
+    
+}
+
+@code {
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private List<KeyValuePair<string, string>> _formData = new();
+
+    private string Encode()
+    {
+        var content = new FormUrlEncodedContent(_formData);
+        return content.ReadAsStringAsync().GetAwaiter().GetResult();
+    }
+
+    private void Decode(string rawFormData)
+    {
+        throw new NotImplementedException();
+        //_formData = HttpUtility.ParseQueryString(rawFormData).GetEnumerator().Select(kv => new KeyValuePair<string, string>(kv.Name, kv.Value)).ToList();
+    }
+}

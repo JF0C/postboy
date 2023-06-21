@@ -1,13 +1,10 @@
-﻿@using Postboy.Data
-@using Postboy.Services
-@using AntDesign
-@inject IRequestStorageService RequestService
+﻿@inject IRequestStorageService RequestService
 
 <Menu
     DefaultSelectedKeys=@(new[] { "1" })
     DefaultOpenKeys=@(new[] { "home" })
-    Mode=@MenuMode.Inline>
-
+    Mode=@MenuMode.Inline
+>
     <MenuItem Key="home" RouterLink="/">
     <span>
         <Icon Type="home"/>

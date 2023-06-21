@@ -12,8 +12,15 @@ namespace Postboy.Services
 
         private async Task<AppState> ReadState()
         {
-            using var file = new StreamReader(File.OpenRead("appstate.json"));
-            var state = JsonSerializer.Deserialize<AppState>(await file.ReadToEndAsync());
+            using var file = File.OpenRead("appstate.json");
+            using var fileStream = new StreamReader(file);
+            var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
+            foreach(var r in state.Requests)
+            {
+                r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+            }
+            fileStream.Close();
+            file.Close();
             if (state is null)
             {
                 throw new Exception("appstate.json invalid");
@@ -83,6 +90,8 @@ namespace Postboy.Services
             current.Url = request.Url;
             current.Method = request.Method;
             current.Headers = request.Headers;
+            current.AutoHeaders = request.AutoHeaders;
+            current.ContentTypeString = StoredRequestContentType.Serialize(request.ContentType);
             await WriteState(state);
             return true;
         }

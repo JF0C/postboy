@@ -1,5 +1,6 @@
 ﻿@page "/Request/{name?}"
 @using Postboy.Data
+@using Postboy.Data.ContentTypes;
 @using Postboy.Helpers;
 @using Postboy.Services
 @using AntDesign
@@ -53,16 +54,39 @@ else
         </GridCol>
     </GridRow>
 
-    <HeadersView @bind-Value=Request.Headers />
+    <Collapse>
+        <HeadersView @bind-Value=Request.Headers />
+        <AutoHeadersView @bind-Value=Request.AutoHeaders/>
+    </Collapse>
 
-    <Divider/>
+    <Divider />
+
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="2">
+            Content-Type
+        </GridCol>
+        <GridCol Span="4">
+            <Select @bind-Value=Request.ContentType DataSource="ContentTypes" />
+        </GridCol>
+    </GridRow>
 
     <GridRow Gutter="16" Justify="left" Align="top">
         <GridCol Span="2">
             Body
         </GridCol>
         <GridCol Span="14">
-            <TextArea @bind-Value=Request.Body/>
+            @if (Request.ContentType is ContentTypeNone)
+            {
+                @("None")
+            }
+            else if (Request.ContentType is ContentTypeJson)
+            {
+                <TextArea @bind-Value=Request.Body/>
+            }
+            else if (Request.ContentType is ContentTypeFormEncoded)
+            {
+                <TextArea @bind-Value=Request.Body/>
+            }
         </GridCol>
     </GridRow>
 
@@ -99,7 +123,7 @@ else
                 Body
             </GridCol>
             <GridCol Span="14">
-                <TextArea Rows="(uint)Responsetext.Split('\n').Length" @bind-Value=Responsetext ReadOnly />
+                <TextArea Rows="20" @bind-Value=Responsetext ReadOnly />
             </GridCol>
         </GridRow>
     }
@@ -123,7 +147,7 @@ else
 
     private bool _waitingForResponse;
 
-    private List<HttpMethod> Methods = new()
+    private readonly List<HttpMethod> Methods = new()
     {
         HttpMethod.Get,
         HttpMethod.Post,
@@ -136,6 +160,13 @@ else
         HttpMethod.Trace
     };
 
+    private readonly List<StoredRequestContentType> ContentTypes = new()
+    {
+        StoredRequestContentType.None,
+        StoredRequestContentType.Json,
+        StoredRequestContentType.FormEncoded
+    };
+
     protected override async Task OnParametersSetAsync()
     {
         if (Name is null)
@@ -146,6 +177,8 @@ else
         {
             Request = await Storage.GetByName(Name);
         }
+        Response = null;
+        Responsetext = null;
     }
 
     private async Task SaveChanges()

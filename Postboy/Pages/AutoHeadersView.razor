@@ -1,0 +1,92 @@
+﻿@using AntDesign
+@using Postboy.Data
+@using Postboy.Services
+@inject IRequestStorageService Storage
+
+<Panel Header="Auto Headers">
+    @if (Value is not null && _requests is not null)
+    {
+        @foreach (var header in Value)
+        {
+            <GridRow Gutter="16" Justify="left" Align="top">
+                <GridCol Span="3">
+                    <Input @bind-Value=header.Key />
+                </GridCol>
+                <GridCol Span="3">
+                    <EnumSelect @bind-Value=header.Type />
+                </GridCol>
+                <GridCol Span="3">
+                    <Select TItemValue="Guid"
+                        TItem="StoredRequest"
+                        LabelName="@nameof(StoredRequest.Name)"
+                        ValueName="@nameof(StoredRequest.Id)"
+                        DataSource="_requests"
+                        @bind-Value=header.RequestId
+                    />
+                </GridCol>
+                <GridCol Span="3">
+                    <Button OnClick="@(() => RemoveAutoHeader(header))">
+                        <Icon Type="minus"/>
+                    </Button>
+                </GridCol>
+            </GridRow>
+        }
+        <GridRow Gutter="16" Justify="left" Align="top">
+            <GridCol Span="3">
+                <Input @bind-Value=_newItem.Key />
+            </GridCol>
+            <GridCol Span="3">
+                <EnumSelect @bind-Value=_newItem.Type />
+            </GridCol>
+            <GridCol Span="3">
+                <Select TItemValue="Guid"
+                    TItem="StoredRequest"
+                    LabelName="@nameof(StoredRequest.Name)"
+                    ValueName="@nameof(StoredRequest.Id)"
+                    DataSource="_requests"
+                    @bind-Value=_newItem.RequestId />
+            </GridCol>
+            <GridCol Span="3">
+                <Button OnClick="AddAutoRequest">
+                    <Icon Type="plus" />
+                </Button>
+            </GridCol>
+        </GridRow>
+    }
+</Panel>
+
+@code {
+    [Parameter]
+    public List<AutoHeader>? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<List<AutoHeader>> ValueChanged { get; set; }
+
+    private List<StoredRequest>? _requests;
+
+    private AutoHeader _newItem = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _requests = await Storage.GetAll();
+        await base.OnInitializedAsync();
+    }
+
+    private void AddAutoRequest()
+    {
+        var newitem = new AutoHeader
+        {
+            Key = _newItem.Key,
+            RequestId = _newItem.RequestId,
+            Type = _newItem.Type
+        };
+        _newItem = new();
+        Value?.Add(newitem);
+        ValueChanged.InvokeAsync(Value);
+    }
+    private void RemoveAutoHeader(AutoHeader header)
+    {
+        Value?.Remove(header);
+        ValueChanged.InvokeAsync(Value);
+    }
+}

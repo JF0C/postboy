@@ -4,6 +4,6 @@ namespace Postboy.Services
 {
     public interface IRequestExecutorService
     {
-        Task<HttpResponseMessage> Execute(StoredRequest request);
+        Task<HttpResponseMessage> Execute(StoredRequest request, bool evaluateAutoHeaders = true);
     }
 }
