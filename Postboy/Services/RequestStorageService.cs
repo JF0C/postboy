@@ -129,6 +129,10 @@ namespace Postboy.Services
             {
                 throw new Exception($"Request {requestId} not found!");
             }
+            if (parent.RequestIds.Any(r => r == requestId))
+            {
+                throw new Exception($"Request {request.Name} is already in folder {parent.Name}");
+            }
             parent.RequestIds.Add(requestId);
             await WriteState(state);
             return true;

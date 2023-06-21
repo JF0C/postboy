@@ -69,7 +69,7 @@
             }
             @foreach (var rid in Folder.RequestIds)
             {
-                var request = Storage.GetById(rid).GetAwaiter().GetResult();
+                var request = GetById(rid);
                 @if (request is not null)
                 {
                     var link = $"/Request/{request.Name}";
@@ -100,6 +100,14 @@
     private EditFoldernameModal? _folderName;
 
     private AddRequestToFolderModal? _addRequest;
+
+    private List<StoredRequest>? _requests;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _requests = await Storage.GetAll();
+        await base.OnInitializedAsync();
+    }
 
     private async Task EditTitle()
     {
@@ -149,5 +157,9 @@
     private async Task RemoveRequest(Guid folderId, Guid requestId)
     {
         await Storage.RemoveRequestFromFolder(folderId, requestId);
+    }
+    private StoredRequest? GetById(Guid id)
+    {
+        return _requests?.FirstOrDefault(r => r.Id == id);
     }
 }
