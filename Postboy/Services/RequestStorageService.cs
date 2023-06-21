@@ -180,9 +180,18 @@ namespace Postboy.Services
             if (folder.RequestIds.Any(id => id == requestId))
             {
                 folder.RequestIds.Remove(requestId);
+                await WriteState(state);
                 return true;
             }
             throw new Exception($"Folder {folderId} does not contain the request {requestId}");
+        }
+
+        public async Task<bool> SaveFolders(Folder root)
+        {
+            var state = await ReadState();
+            state.RootFolder = root;
+            await WriteState(state);
+            return true;
         }
 
         private Folder? FindFolderRecursively(Folder root, Guid id)

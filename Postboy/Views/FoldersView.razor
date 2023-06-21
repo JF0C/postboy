@@ -1,4 +1,5 @@
 ﻿@inject IRequestStorageService Storage
+@inject IComponentInteractionService Interaction
 @inject ModalService Modal
 
 <SubMenu IsOpen=@(Folder?.IsOpen ?? false) @ref=_subMenu>
@@ -15,12 +16,15 @@
                 <Dropdown>
                     <Overlay>
                         <Menu>
-                            <MenuItem OnClick="EditTitle">
-                                <span>
-                                    <Icon Type="edit" />
-                                    <span>Edit Name</span>
-                                </span>
-                            </MenuItem>
+                            @if (Level > 0)
+                            {
+                                <MenuItem OnClick="EditTitle">
+                                    <span>
+                                        <Icon Type="edit" />
+                                        <span>Edit Name</span>
+                                    </span>
+                                </MenuItem>
+                            }
                             @if (Level < 2)
                             {
                                 <MenuItem OnClick="@(() => AddFolder(Folder.Id))">
@@ -78,6 +82,9 @@
                         <Popover Content="@request.Name">
                             <span>@request.Name</span>
                         </Popover>
+                        <Button OnClick=@(() => RemoveRequest(Folder.Id, request.Id)) Size="@ButtonSize.Small">
+                            <Icon Type="close" />
+                        </Button>
                     </MenuItem>
                 }
             }
@@ -116,7 +123,7 @@
         {
             if (name is null) return;
             await Storage.RenameFolder(Folder.Id, name);
-            StateHasChanged();
+            Interaction.Notify("menuchanged");
         });
         _folderName.Show(Folder.Name);
     }
@@ -127,7 +134,7 @@
         {
             if (name is null) return;
             await Storage.CreateFolder(folderId, name);
-            StateHasChanged();
+            Interaction.Notify("menuchanged");
         });
         _folderName.Show("new folder");
     }
@@ -140,7 +147,7 @@
             }))
         {
             await Storage.DeleteFolder(Folder.Id);
-            StateHasChanged();
+            Interaction.Notify("menuchanged");
         }
     }
     private async Task AddRequest(Guid folderId)
@@ -150,13 +157,14 @@
         {
             if (id is null) return;
             await Storage.AddRequestToFolder(folderId, id.Value);
-            StateHasChanged();
+            Interaction.Notify("menuchanged");
         });
         _addRequest.Show();
     }
     private async Task RemoveRequest(Guid folderId, Guid requestId)
     {
         await Storage.RemoveRequestFromFolder(folderId, requestId);
+        Interaction.Notify("menuchanged");
     }
     private StoredRequest? GetById(Guid id)
     {

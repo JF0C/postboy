@@ -8,8 +8,6 @@ namespace Postboy.Data
         public Guid Id { get; set; } = Guid.NewGuid();
         public List<Folder> Folders { get; set; } = new();
         public List<Guid> RequestIds { get; set; } = new();
-
-        [JsonIgnore]
         public bool IsOpen { get; set; }
     }
 }

@@ -69,6 +69,8 @@
         Interaction.Subscribe("menuchanged", async () =>
         {
             Requests = await RequestService.GetAll();
+            RootFolder = await RequestService.GetFolders();
+            await RequestService.SaveFolders(RootFolder);
             StateHasChanged();
         });
     }

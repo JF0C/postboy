@@ -16,5 +16,7 @@ namespace Postboy.Services
         Task<bool> DeleteFolder(Guid folderId);
         Task<bool> RenameFolder(Guid folderId, string name);
         Task<bool> RemoveRequestFromFolder(Guid folderId, Guid requestId);
+
+        Task<bool> SaveFolders(Folder root);
     }
 }
