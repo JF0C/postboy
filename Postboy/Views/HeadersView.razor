@@ -1,45 +1,56 @@
-﻿@using AntDesign
-@inject IMessageService Notification
+﻿@inject IMessageService Notification
 
 <Panel Header="Headers">
-@if (ModifyableHeaders is not null)
-{
-    for (var k = 0; k < ModifyableHeaders.Count; k++)
-    {
-        var index = k;
-        var header = ModifyableHeaders[k];
-        <GridRow Gutter="16" Justify="left" Align="top">
-            <GridCol Span="2">
-                <Input @bind-Value=header.Key OnChange=@((string str) => OnKeydownKey(index, str)) />
-            </GridCol>
-            <GridCol Span="5">
-                <Input @bind-Value=header.Value OnChange=@((string str) => OnKeydownValue(index, str)) />
-            </GridCol>
-            <GridCol Span="1">
-                <Button OnClick="() => Remove(header.Key)" Danger>
-                    <Icon Type="minus" />
-                </Button>
-            </GridCol>
-        </GridRow>
-    }
-    <GridRow Gutter="16" Justify="left" Align="top">
-    <GridCol Span="2">
-        <Input @bind-Value=newKey />
-    </GridCol>
-    <GridCol Span="5">
-        <Input @bind-Value=newValue />
-    </GridCol>
-    <GridCol Span="1">
-        <Button OnClick="Add" Type="@ButtonType.Primary">
-            <Icon Type="plus" />
-        </Button>
-    </GridCol>
-    </GridRow>
-}
-else
-{
-    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
-}
+    <HeaderTemplate>
+        <Space>
+            <SpaceItem>
+                Headers
+            </SpaceItem>
+            <SpaceItem>
+                <Badge Count=@(ModifyableHeaders?.Count ?? 0) />
+            </SpaceItem>
+        </Space>
+    </HeaderTemplate>
+    <ChildContent>
+        @if (ModifyableHeaders is not null)
+        {
+            for (var k = 0; k < ModifyableHeaders.Count; k++)
+            {
+                var index = k;
+                var header = ModifyableHeaders[k];
+                <GridRow Gutter="16" Justify="left" Align="top" Style=@($"margin-bottom:{Constants.MarginBottomNormal}px;")>
+                    <GridCol Span="3">
+                        <Input @bind-Value=header.Key OnChange=@((string str) => OnKeydownKey(index, str)) />
+                    </GridCol>
+                    <GridCol Span="6">
+                        <Input @bind-Value=header.Value OnChange=@((string str) => OnKeydownValue(index, str)) />
+                    </GridCol>
+                    <GridCol Span="1">
+                        <Button OnClick="() => Remove(header.Key)" Danger>
+                            <Icon Type="minus" />
+                        </Button>
+                    </GridCol>
+                </GridRow>
+            }
+            <GridRow Gutter="16" Justify="left" Align="top">
+                <GridCol Span="3">
+                    <Input @bind-Value=newKey />
+                </GridCol>
+                <GridCol Span="6">
+                    <Input @bind-Value=newValue />
+                </GridCol>
+                <GridCol Span="1">
+                    <Button OnClick="Add" Type="@ButtonType.Primary">
+                        <Icon Type="plus" />
+                    </Button>
+                </GridCol>
+            </GridRow>
+        }
+        else
+        {
+            <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+        }
+    </ChildContent>
 </Panel>
 
 @code {

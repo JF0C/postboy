@@ -1,6 +1,7 @@
-﻿@using System.Web;
-@using System.Linq;
-@using Postboy.Helpers;
+﻿@using System.Web
+@using System.Linq
+@using Postboy.Helpers
+@using Postboy.Constants
 @inject IMessageService Notification
 
 @if (Value is not null)
@@ -13,7 +14,7 @@
         {
             continue;
         }
-        <GridRow Gutter="16" Justify="left" Align="top">
+        <GridRow Gutter="16" Justify="left" Align="top" Style=@($"margin-bottom:{Constants.MarginBottomNormal}px;")>
             <GridCol Span="4">
                 <Input Placeholder="Key" @bind-Value=kv.key OnChange=@((string v) => OnInput(index, (v, kv.value)))/>
             </GridCol>

@@ -1,5 +1,6 @@
 ﻿@using AntDesign
 @using System.Reflection
+@using Constants
 @inherits LayoutComponentBase
 
 <PageTitle>Postboy</PageTitle>
@@ -7,19 +8,19 @@
 <div class="page" style="height: 100%;">
     <Layout>
         <Header>
-            <Title Style="color:white;padding-top;20px">
+            <Title Style="color:white;margin-top:6px;">
                 Postboy
             </Title>
         </Header>
         <Layout>
-            <Sider Style="background:white;" Width="300">
+            <Sider Style="background:white;" Width="@Constants.MenuWidth">
                 <NavMenu />
             </Sider>
             <Content Style="padding: 20px;">
                 @Body
             </Content>
         </Layout>
-        <Footer Style="text-align:center;">
+        <Footer Style="text-align:center;background:#001529;color:white;">
             Version @Assembly.GetExecutingAssembly().GetName().Version.ToString()
         </Footer>
     </Layout>

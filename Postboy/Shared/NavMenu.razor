@@ -35,12 +35,12 @@
                 @foreach (var request in Requests)
                 {
                     var link = $"/Request/{request.Name}";
-                    <MenuItem RouterLink=@link>
-                        <Icon Type="code"/>
-                        <Popover Content="@request.Name">
+                    <Tooltip Placement=@Placement.Right MouseEnterDelay="1" Title="@request.Name">
+                        <MenuItem Style=@($"width:{Constants.MenuWidth}px;") RouterLink=@link>
+                            <Icon Type="code" />
                             <span>@request.Name</span>
-                        </Popover>
-                    </MenuItem>
+                        </MenuItem>
+                    </Tooltip>
                 }
             }
         </ChildContent>

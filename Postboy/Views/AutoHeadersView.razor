@@ -1,22 +1,30 @@
-﻿@using AntDesign
-@using Postboy.Data
-@using Postboy.Services
-@inject IRequestStorageService Storage
+﻿@inject IRequestStorageService Storage
 
-<Panel Header="Auto Headers">
-    @if (Value is not null && _requests is not null)
-    {
-        @foreach (var header in Value)
+<Panel>
+    <HeaderTemplate>
+        <Space>
+            <SpaceItem>
+                Auto Headers
+            </SpaceItem>
+            <SpaceItem>
+                <Badge Count=@(Value?.Count ?? 0) />
+            </SpaceItem>
+        </Space>
+    </HeaderTemplate>
+    <ChildContent>
+        @if (Value is not null && _requests is not null)
         {
-            <GridRow Gutter="16" Justify="left" Align="top">
-                <GridCol Span="3">
-                    <Input @bind-Value=header.Key OnChange=@((string str) => Changed()) />
-                </GridCol>
-                <GridCol Span="3">
-                    <EnumSelect @bind-Value=header.Type OnSelectedItemChanged=@((Enums.AutoHeaderType t) => Changed())/>
-                </GridCol>
-                <GridCol Span="3">
-                    <Select TItemValue="Guid"
+            @foreach (var header in Value)
+            {
+                    <GridRow Gutter="16" Justify="left" Align="top" Style=@($"margin-bottom:{Constants.MarginBottomNormal}px;")>
+                        <GridCol Span="3">
+                            <Input @bind-Value=header.Key OnChange=@((string str) => Changed()) />
+                        </GridCol>
+                        <GridCol Span="3">
+                            <EnumSelect @bind-Value=header.Type OnSelectedItemChanged=@((Enums.AutoHeaderType t) => Changed())/>
+                        </GridCol>
+                        <GridCol Span="3">
+                            <Select TItemValue="Guid"
                         TItem="StoredRequest"
                         LabelName="@nameof(StoredRequest.Name)"
                         ValueName="@nameof(StoredRequest.Id)"
@@ -24,40 +32,41 @@
                         @bind-Value=header.RequestId
                         OnSelectedItemChanged=@((r) => Changed())
                     />
+                        </GridCol>
+                        <GridCol Span="1">
+                            <Button Danger OnClick="@(() => RemoveAutoHeader(header))">
+                                <Icon Type="minus"/>
+                            </Button>
+                        </GridCol>
+                    </GridRow>
+            }
+            <GridRow Gutter="16" Justify="left" Align="top">
+                <GridCol Span="3">
+                    <Input @bind-Value=_newItem.Key />
                 </GridCol>
                 <GridCol Span="3">
-                    <Button Danger OnClick="@(() => RemoveAutoHeader(header))">
-                        <Icon Type="minus"/>
-                    </Button>
+                    <EnumSelect @bind-Value=_newItem.Type />
                 </GridCol>
-            </GridRow>
-        }
-        <GridRow Gutter="16" Justify="left" Align="top">
-            <GridCol Span="3">
-                <Input @bind-Value=_newItem.Key />
-            </GridCol>
-            <GridCol Span="3">
-                <EnumSelect @bind-Value=_newItem.Type />
-            </GridCol>
-            <GridCol Span="3">
-                <Select TItemValue="Guid"
+                <GridCol Span="3">
+                    <Select TItemValue="Guid"
                     TItem="StoredRequest"
                     LabelName="@nameof(StoredRequest.Name)"
                     ValueName="@nameof(StoredRequest.Id)"
                     DataSource="_requests"
                     @bind-Value=_newItem.RequestId />
-            </GridCol>
-            <GridCol Span="3">
-                <Button Type="@ButtonType.Primary" OnClick="AddAutoRequest">
-                    <Icon Type="plus" />
-                </Button>
-            </GridCol>
-        </GridRow>
-    }
-    else
-    {
-        <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
-    }
+                </GridCol>
+                <GridCol Span="3">
+                    <Button Type="@ButtonType.Primary" OnClick="AddAutoRequest">
+                        <Icon Type="plus" />
+                    </Button>
+                </GridCol>
+            </GridRow>
+        }
+        else
+        {
+            <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+        }
+    </ChildContent>
 </Panel>
 
 @code {

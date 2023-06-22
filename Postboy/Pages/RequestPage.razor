@@ -23,7 +23,7 @@
             <span style="display:@(_editTitle?"none":"");">
                 @Name
             </span>
-            <Input Style=@(_editTitle?"":"display:none;") @bind-Value=Request.Name />
+            <Input Style=@(_editTitle?"width:200px;":"display:none;") @bind-Value=Request.Name />
             @if (!_editTitle)
             {
                 <Dropdown>
@@ -44,7 +44,7 @@
                             <MenuItem OnClick=@(() => AddToFolder(Request.Id))>
                                 <span>
                                     <Icon Type="folder-add" />
-                                    <span>Add to folder</span>
+                                    <span>To folder</span>
                                 </span>
                             </MenuItem>
                             <MenuItem OnClick="Delete">
@@ -56,11 +56,17 @@
                         </Menu>
                     </Overlay>
                     <ChildContent>
-                        <Button Size="@ButtonSize.Small">
-                            <Icon Type="more" />
+                        <Button>
+                            <Icon Style="font-size:22px;" Type="menu" />
                         </Button>
                     </ChildContent>
                 </Dropdown>
+                <Tooltip Placement="@Placement.Bottom" Title="Save">
+                    <Button @onclick="SaveChanges">
+                        <Icon Style="font-size:22px;" Type="save" />
+                    </Button>
+                </Tooltip>
+                
             }
             else
             {
@@ -84,22 +90,26 @@ else
 }
 else
 {
-
     <InputGroup>
         <GridRow>
-            <GridCol Span="2">
-                <Select @bind-Value=Request.Method DataSource="Methods" Size="@InputSize.Large"/>
+            <GridCol>
+                <Select @bind-Value=Request.Method DataSource="Methods" Size="@InputSize.Large" 
+                    Style="margin-right:-2px;width:110px;" />
             </GridCol>
             <GridCol Span="10">
-                <Input @bind-Value=Request.Url Size="@InputSize.Large" />
+                <Input @bind-Value=Request.Url Size="@InputSize.Large" 
+                    Style="height:40px;border-radius:0px;"/>
             </GridCol>
             <GridCol Span="1">
-                <Button OnClick="Execute" Type="@ButtonType.Primary" Size="@InputSize.Large">
-                    <Icon Type="play-circle" />
+                <Button OnClick="Execute" Type="@ButtonType.Primary" Size="@InputSize.Large"
+                    Style="border-bottom-left-radius:0px;border-top-left-radius:0px;">
+                    <Icon Type="send" />
                 </Button>
             </GridCol>
         </GridRow>
     </InputGroup>
+
+    <Divider />
 
     <Collapse>
         <HeadersView @bind-Value=Request.Headers />
@@ -108,7 +118,7 @@ else
 
     <Divider />
 
-    <GridRow Gutter="16" Justify="left" Align="top">
+    <GridRow Gutter="16" Justify="left" Align="top" Style=@($"margin-bottom:{Constants.MarginBottomNormal}px;")>
         <GridCol Span="2">
             Content-Type
         </GridCol>
