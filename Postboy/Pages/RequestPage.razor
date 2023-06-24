@@ -79,9 +79,24 @@
 }
 else
 {
-    <h3>
-        <Input @bind-Value=Request.Name Placeholder="enter request name"/>
-    </h3>
+
+    <GridRow Gutter="16" Justify="left" Align="top" Style="@($"margin-bottom:{Constants.MarginBottomNormal}px;")">
+        <GridCol Span="10">
+            <Input @bind-Value=Request.Name style="font-size:18px;height:32px;" Placeholder="enter request name" />
+        </GridCol>
+        <GridCol>
+            <Tooltip Placement="@Placement.Bottom" Title="To folder">
+                <Button OnClick="@(() => AddToFolder(Request.Id))">
+                    <Icon Style="font-size:22px;" Type="folder-add" />
+                </Button>
+            </Tooltip>
+            <Tooltip Placement="@Placement.Bottom" Title="Save">
+                <Button @onclick="SaveChanges">
+                    <Icon Style="font-size:22px;" Type="save" />
+                </Button>
+            </Tooltip>
+        </GridCol>
+    </GridRow>
 }
 
 @if (Request is null)
