@@ -10,6 +10,8 @@ builder.Services.AddSingleton<IRequestStorageService, RequestStorageService>();
 builder.Services.AddSingleton<IRequestExecutorService, RequestExecutorService>();
 builder.Services.AddSingleton<IComponentInteractionService, ComponentInteractionService>();
 
+builder.WebHost.UseUrls($"http://localhost:{builder.Configuration["ApplicationPort"]}");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
