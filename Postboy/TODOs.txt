@@ -2,3 +2,6 @@ headers don't change on cut content
 content-type jumps back after save
 enable logging into browser console
 add readme
+move appstate to userspace
+enable duplication of requests
+multiple write attempts lead to non-critical error
