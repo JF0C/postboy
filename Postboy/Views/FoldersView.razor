@@ -81,7 +81,7 @@
                     <Tooltip Placement=@Placement.Right MouseEnterDelay="1">
                         <TitleTemplate>
                             <Tooltip Title="Remove from folder">
-                                <Button Size="@ButtonSize.Small" OnClick="@(() => RemoveRequest(Folder.Id, request.Id))">
+                                <Button Danger Size="@ButtonSize.Small" OnClick="@(() => RemoveRequest(Folder.Id, request.Id))">
                                     <Icon Type="close" />
                                 </Button>
                             </Tooltip>

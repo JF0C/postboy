@@ -5,3 +5,4 @@ add readme
 move appstate to userspace
 enable duplication of requests
 multiple write attempts lead to non-critical error
+add view for response headers
