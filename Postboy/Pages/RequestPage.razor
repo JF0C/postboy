@@ -2,8 +2,7 @@
 @using Postboy.Data
 @using Postboy.Data.ContentTypes;
 @using Newtonsoft.Json
-@using Postboy.Views
-@using Postboy.Helpers
+@using System.Reflection
 @inject NavigationManager Navigation
 @inject IRequestStorageService Storage
 @inject IMessageService Notification
@@ -45,6 +44,12 @@
                                 <span>
                                     <Icon Type="folder-add" />
                                     <span>To folder</span>
+                                </span>
+                            </MenuItem>
+                            <MenuItem OnClick=@(() => Duplicate(Request.Id))>
+                                <span>
+                                    <Icon Type="copy" />
+                                    <span>Duplicate</span>
                                 </span>
                             </MenuItem>
                             <MenuItem OnClick="Delete">
@@ -207,9 +212,7 @@ else
 
     private string? Responsetext { get; set; }
 
-    private bool _waitingForResponse;
-
-    private Timer? _autoSaveTimer;
+    private bool _waitingForResponse, _saving;
 
     private AddFolderToRequestModal? _addFolder;
 
@@ -236,15 +239,20 @@ else
     protected override Task OnInitializedAsync()
     {
         //_autoSaveTimer = new Timer(async (obj) => await SaveChanges(), new object(), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-        Navigation.LocationChanged += async (object? sender, LocationChangedEventArgs args) =>
-        {
-            if (!_deleting && !args.Location.TrimEnd('/').EndsWith("Request"))
-            {
-                await SaveChanges();
-            }
-        };
+
+        Navigation.LocationChanged += async (s, a) => await AutoSave(s, a);
         _deleting = false;
         return base.OnInitializedAsync();
+    }
+
+    private async Task AutoSave(object? sender, LocationChangedEventArgs args)
+    {
+        if (!_deleting && !args.Location.TrimEnd('/').EndsWith("Request") && !_saving)
+        {
+            _saving = true;
+            await SaveChanges();
+            _saving = false;
+        }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -287,6 +295,28 @@ else
             Notification.Success("Changes saved!");
         }
         Interaction.Notify("menuchanged");
+    }
+
+    private async Task Duplicate(Guid id)
+    {
+        var request = await Storage.GetById(id);
+        if (request is null)
+        {
+            Notification.Error("Error duplicating the request");
+            return;
+        }
+        var newRequest = new StoredRequest
+        {
+            Name = $"{request.Name} copy",
+            AutoHeaders = request.AutoHeaders.ToList(),
+            Body = request.Body,
+            ContentType = StoredRequestContentType.Deserialize(request.ContentType.ToString() ?? "None"),
+            Headers = request.Headers.ToDictionary(kv => kv.Key, kv => kv.Value),
+            Method = request.Method,
+            Url = request.Url
+        };
+        await Storage.Create(newRequest);
+        Navigation.NavigateTo($"Request/{newRequest.Name}");
     }
 
     private async Task Delete()

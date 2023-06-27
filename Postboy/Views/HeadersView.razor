@@ -103,15 +103,21 @@
         }
     }
 
-    private void OnKeydownKey(int index, string value)
+    private void OnKeydownKey(int index, string key)
     {
         if (ModifyableHeaders is null) return;
-        ModifyableHeaders[index] = (value, ModifyableHeaders[index].Value);
+        var value = ModifyableHeaders[index].Value;
+        var list = ModifyableHeaders.ToList();
+        list[index] = (key, value);
+        ModifyableHeaders = list;
     }
 
     private void OnKeydownValue(int index, string value)
     {
         if (ModifyableHeaders is null) return;
-        ModifyableHeaders[index] = (value, ModifyableHeaders[index].Value);
+        var key = ModifyableHeaders[index].Key;
+        var list = ModifyableHeaders.ToList();
+        list[index] = (key, value);
+        ModifyableHeaders = list;
     }
 }
