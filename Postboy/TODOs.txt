@@ -1,4 +1,3 @@
 add readme
-move appstate to userspace
 multiple write attempts lead to non-critical error (probably fixed now)
-add view for response headers
+create install/uninstall script

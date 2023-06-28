@@ -1,0 +1,88 @@
+﻿@using Newtonsoft.Json
+
+<h3>Response</h3>
+@if (Value is not null)
+{
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="14">
+            <b>Body</b>
+        </GridCol>
+        <GridCol Span="4">
+            <b>Headers</b>
+        </GridCol>
+    </GridRow>
+
+    @if (ResponseText is not null)
+    {
+    <GridRow Gutter="16" Justify="left" Align="top">
+        <GridCol Span="14">
+            <TextArea Rows="20" @bind-Value=ResponseText ReadOnly />
+        </GridCol>
+        <GridCol Span="10">
+            <GridRow>
+                <GridCol Span="5">
+                    StatusCode
+                </GridCol>
+                <GridCol Span="5">
+                    @Value.StatusCode
+                </GridCol>
+            </GridRow>
+            @foreach (var h in Value.Headers)
+            {
+                <GridRow>
+                    <GridCol Span="5">
+                        @h.Key
+                    </GridCol>
+                    <GridCol Span="5">
+                        @string.Join("; ", h.Value)
+                    </GridCol>
+                </GridRow>
+            }
+            </GridCol>
+    </GridRow>
+    }
+}
+@if (Loading)
+{
+    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+}
+
+@code {
+    [Parameter]
+    public HttpResponseMessage? Value { get; set; }
+
+    [Parameter]
+    public bool Loading { get; set; }
+
+    private string? ResponseText
+    {
+        get
+        {
+            if (Value is null) return null;
+            var val = Value.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (IsValidJson(val))
+            {
+                return JsonHelper.FormatJson(val);
+            }
+            return val;
+        }
+        set
+        {
+            // immutable
+        }
+    }
+
+    private bool IsValidJson(string str)
+    {
+        try
+        {
+            dynamic parsedJson = JsonConvert.DeserializeObject(str);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+        return true;
+    }
+
+}

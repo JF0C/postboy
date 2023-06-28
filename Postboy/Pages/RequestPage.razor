@@ -116,7 +116,7 @@ else
                 <Select @bind-Value=Request.Method DataSource="Methods" Size="@InputSize.Large" 
                     Style="margin-right:-2px;width:110px;" />
             </GridCol>
-            <GridCol Span="10">
+            <GridCol Span="16">
                 <Input @bind-Value=Request.Url Size="@InputSize.Large" 
                     Style="height:40px;border-radius:0px;"/>
             </GridCol>
@@ -167,37 +167,8 @@ else
         </GridCol>
     </GridRow>
 }
-@if (_waitingForResponse)
-{
-    <br />
-    <h3>Response</h3>
-    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
-}
-@if (Response is not null){
-    <br />
-    <h3>Response</h3>
-
-    <GridRow Gutter="16" Justify="left" Align="top">
-        <GridCol Span="2">
-            Statuscode
-        </GridCol>
-        <GridCol Span="3">
-            @Response.StatusCode
-        </GridCol>
-    </GridRow>
-
-    @if (Responsetext is not null)
-    {
-        <GridRow Gutter="16" Justify="left" Align="top">
-            <GridCol Span="2">
-                Body
-            </GridCol>
-            <GridCol Span="14">
-                <TextArea Rows="20" @bind-Value=Responsetext ReadOnly />
-            </GridCol>
-        </GridRow>
-    }
-}
+<br />
+<ResponseView Value="Response" Loading="_waitingForResponse" />
 <AddFolderToRequestModal @ref=_addFolder/>
 
 @code {
@@ -266,7 +237,6 @@ else
             Request = await Storage.GetByName(Name);
         }
         Response = null;
-        Responsetext = null;
     }
 
     private async Task SaveChanges()
@@ -361,19 +331,11 @@ else
     private async Task Execute()
     {
         _waitingForResponse = true;
+        Response = null;
         await SaveChanges();
         try
         {
             Response = await Executor.Execute(Request);
-            var content = await Response.Content.ReadAsStringAsync();
-            if (IsValidJson(content))
-            {
-                Responsetext = JsonHelper.FormatJson(content);
-            }
-            else
-            {
-                Responsetext = content;
-            }
             _waitingForResponse = false;
         }
         catch (Exception ex)
@@ -385,19 +347,6 @@ else
         {
             _waitingForResponse = false;
         }
-    }
-
-    private bool IsValidJson(string str)
-    {
-        try
-        {
-            dynamic parsedJson = JsonConvert.DeserializeObject(str);
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-        return true;
     }
 
     private async Task EditTitle()

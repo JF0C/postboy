@@ -26,6 +26,19 @@ a, .btn-link {
     padding-top: 1.1rem;
 }
 
+.ant-layout-footer{
+    z-index: 100000;
+}
+
+.ant-layout-content{
+    overflow-y: scroll;
+}
+
+.ant-layout-sider {
+    overflow-y: scroll;
+    overflow-x: clip;
+}
+
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
