@@ -1,15 +1,20 @@
 ﻿using Postboy.Data;
 using Postboy.Helpers;
 using System.Text.Json;
+using Const = Postboy.Constants.Constants;
 
 namespace Postboy.Services
 {
     public class RequestStorageService : IRequestStorageService
     {
         private AppState? _appState;
-        private string AppStateFolder => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).TrimEnd(Path.DirectorySeparatorChar);
-        private string AppStateFile => $"{AppStateFolder}{Path.DirectorySeparatorChar}Postboy{Path.DirectorySeparatorChar}appstate.json";
-        public RequestStorageService()
+
+        private readonly ILogger<RequestStorageService> _logger;
+
+        private readonly string? _optionsSetAppDir;
+        private string AppStateFolder => (_optionsSetAppDir ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar + "Postboy";
+        private string AppStateFile => $"{AppStateFolder}{Path.DirectorySeparatorChar}appstate.json";
+        public RequestStorageService(IConfiguration config, ILogger<RequestStorageService> logger)
         {
             if (!Directory.Exists(AppStateFolder))
             {
@@ -17,31 +22,47 @@ namespace Postboy.Services
             }
             if (!File.Exists(AppStateFile))
             {
-                _appState = AppStateInitializer.InitializeAppState();
-                WriteState(_appState).GetAwaiter().GetResult();
+                WriteNewState();
             }
+            _optionsSetAppDir = config[Const.UserAppDir];
+            _logger = logger;
+            _logger.LogInformation($"UserAppDir={_optionsSetAppDir ?? "default"}");
         }
 
         private async Task<AppState> ReadState(bool force = false)
         {
-            if (_appState is null || force)
+            try
             {
-                using var file = File.OpenRead(AppStateFile);
-                using var fileStream = new StreamReader(file);
-                var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
-                foreach (var r in state.Requests)
+                if (_appState is null || force)
                 {
-                    r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                    using var file = File.OpenRead(AppStateFile);
+                    using var fileStream = new StreamReader(file);
+                    var state = JsonSerializer.Deserialize<AppState>(await fileStream.ReadToEndAsync());
+                    foreach (var r in state.Requests)
+                    {
+                        r.ContentType = StoredRequestContentType.Deserialize(r.ContentTypeString);
+                    }
+                    fileStream.Close();
+                    file.Close();
+                    if (state is null)
+                    {
+                        throw new Exception("appstate.json invalid");
+                    }
+                    _appState = state;
                 }
-                fileStream.Close();
-                file.Close();
-                if (state is null)
-                {
-                    throw new Exception("appstate.json invalid");
-                }
-                _appState = state;
+                return _appState;
             }
-            return _appState;
+            catch (Exception ex)
+            {
+                WriteNewState();
+                return await ReadState(true);
+            }
+        }
+
+        private void WriteNewState()
+        {
+            _appState = AppStateInitializer.InitializeAppState();
+            WriteState(_appState).GetAwaiter().GetResult();
         }
 
         private async Task WriteState(AppState state)
