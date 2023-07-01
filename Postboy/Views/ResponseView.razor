@@ -1,4 +1,5 @@
 ﻿@using Newtonsoft.Json
+@inject IComponentInteractionService Interaction
 
 <h3>Response</h3>
 @if (Value is not null)
@@ -33,7 +34,7 @@
                     <GridCol Span="5">
                         @h.Key
                     </GridCol>
-                    <GridCol Span="5">
+                    <GridCol Style=@("overflow-wrap: break-word;") Span="10">
                         @string.Join("; ", h.Value)
                     </GridCol>
                 </GridRow>
@@ -44,7 +45,16 @@
 }
 @if (Loading)
 {
-    <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+    <Space>
+        <SpaceItem>
+            <Icon Type="loading" Theme="outline" Style="font-size: 24px" Spin />
+        </SpaceItem>
+        <SpaceItem>
+            <span>
+                @_status
+            </span>
+        </SpaceItem>
+    </Space>
 }
 
 @code {
@@ -53,6 +63,18 @@
 
     [Parameter]
     public bool Loading { get; set; }
+
+    private string _status = string.Empty;
+
+    protected override Task OnInitializedAsync()
+    {
+        Interaction.Subscribe<string>("RequestExecutionStatus", (msg) => InvokeAsync(() => 
+        { 
+            _status = msg;
+            StateHasChanged();
+        }));
+        return base.OnInitializedAsync();
+    }
 
     private string? ResponseText
     {

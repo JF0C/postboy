@@ -18,20 +18,17 @@
             {
                     <GridRow Gutter="16" Justify="left" Align="top" Style=@($"margin-bottom:{Constants.MarginBottomNormal}px;")>
                         <GridCol Span="3">
-                            <Input @bind-Value=header.Key OnChange=@((string str) => Changed()) />
-                        </GridCol>
-                        <GridCol Span="3">
                             <EnumSelect @bind-Value=header.Type OnSelectedItemChanged=@((Enums.AutoHeaderType t) => Changed())/>
                         </GridCol>
-                        <GridCol Span="3">
+                        <GridCol Span="6">
                             <Select TItemValue="Guid"
-                        TItem="StoredRequest"
-                        LabelName="@nameof(StoredRequest.Name)"
-                        ValueName="@nameof(StoredRequest.Id)"
-                        DataSource="_requests"
-                        @bind-Value=header.RequestId
-                        OnSelectedItemChanged=@((r) => Changed())
-                    />
+                                TItem="StoredRequest"
+                                LabelName="@nameof(StoredRequest.Name)"
+                                ValueName="@nameof(StoredRequest.Id)"
+                                DataSource="_requests"
+                                @bind-Value=header.RequestId
+                                OnSelectedItemChanged=@((r) => Changed())
+                            />
                         </GridCol>
                         <GridCol Span="1">
                             <Button Danger OnClick="@(() => RemoveAutoHeader(header))">
@@ -42,12 +39,9 @@
             }
             <GridRow Gutter="16" Justify="left" Align="top">
                 <GridCol Span="3">
-                    <Input @bind-Value=_newItem.Key />
-                </GridCol>
-                <GridCol Span="3">
                     <EnumSelect @bind-Value=_newItem.Type />
                 </GridCol>
-                <GridCol Span="3">
+                <GridCol Span="6">
                     <Select TItemValue="Guid"
                     TItem="StoredRequest"
                     LabelName="@nameof(StoredRequest.Name)"
@@ -95,7 +89,6 @@
     {
         var newitem = new AutoHeader
         {
-            Key = _newItem.Key,
             RequestId = _newItem.RequestId,
             Type = _newItem.Type
         };

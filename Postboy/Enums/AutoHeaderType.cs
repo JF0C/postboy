@@ -4,6 +4,6 @@
     {
         None = 0,
         BearerAuthentication = 1,
-        WidowsFormsAuthentication = 2
+        CookieAuthentication = 2
     }
 }
