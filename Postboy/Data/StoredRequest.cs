@@ -1,5 +1,4 @@
 ﻿using Postboy.Data.ContentTypes;
-using Postboy.Enums;
 using System.Text.Json.Serialization;
 
 namespace Postboy.Data

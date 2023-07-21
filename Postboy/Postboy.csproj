@@ -4,7 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>0.2.1</AssemblyVersion>
+    <AssemblyVersion>0.2.2</AssemblyVersion>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,7 +1,6 @@
 add readme
 multiple write attempts lead to non-critical error
 newly created folders do not show up
-after adding a newly creating request to a folder the folder state is not saved
 cache authorization data for requests
 write tests
 enable autoheader parser extensions

@@ -322,6 +322,10 @@ else
         _addFolder.Done = new EventCallback<Guid?>(this, async (Guid? folderId) =>
         {
             if (folderId is null) return;
+            if (Name is null)
+            {
+                await SaveChanges();
+            }
             await Storage.AddRequestToFolder(folderId.Value, requestId);
             Interaction.Notify("menuchanged");
         });

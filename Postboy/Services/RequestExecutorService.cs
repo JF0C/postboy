@@ -1,10 +1,8 @@
 ﻿using Postboy.Data;
 using Postboy.Data.ContentTypes;
-using Postboy.DTOs;
-using Postboy.Enums;
 using Postboy.Helpers;
+using Postboy.Services.AutoHeaderParser;
 using System.Net;
-using System.Text.Json;
 
 namespace Postboy.Services
 {
@@ -12,10 +10,17 @@ namespace Postboy.Services
     {
         private readonly IRequestStorageService _storage;
         private readonly IComponentInteractionService _intercom;
+        private readonly List<IAutoHeaderParser> _autoHeaders;
         public RequestExecutorService(IRequestStorageService storage, IComponentInteractionService intercom)
         {
             _storage = storage;
             _intercom = intercom;
+            _autoHeaders = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => typeof(IAutoHeaderParser).IsAssignableFrom(p) && p.IsClass)
+                .Select(t => Activator.CreateInstance(t) as IAutoHeaderParser)
+                .Where(p => p is not null)
+                .ToList()!;
         }
         public async Task<HttpResponseMessage> Execute(StoredRequest request, bool evaluateAutoHeaders = true)
         {
@@ -91,27 +96,21 @@ namespace Postboy.Services
             return await ParseHeaderValue(autoHeader.Type, response);
         }
 
-        private async Task<(string, string)> ParseHeaderValue(AutoHeaderType type, HttpResponseMessage message)
+        private async Task<(string, string)> ParseHeaderValue(Guid type, HttpResponseMessage message)
         {
-            switch (type)
+            var parser = _autoHeaders.FirstOrDefault(a => a?.Guid == type);
+            if (parser is null)
             {
-                case AutoHeaderType.None:
-                    return (string.Empty, string.Empty);
-                case AutoHeaderType.BearerAuthentication:
-                    var content = await message.Content.ReadAsStringAsync();
-                    var token = JsonSerializer.Deserialize<TokenResponseDto>(content);
-                    return ("Authorization", $"Bearer {token?.AccessToken}");
-                case AutoHeaderType.CookieAuthentication:
-                    var val = message.Headers.FirstOrDefault(h => h.Key.ToLower() == "set-cookie").Value;
-                    return ("Cookie", val?.FirstOrDefault() ?? "");
-                default: 
-                    throw new NotImplementedException();
+                throw new NotImplementedException($"No parser could be found for header type {type}");
             }
+            return await parser.ParseHeader(message);
         }
 
         private void SetStatus(string status)
         {
             _intercom.Notify("RequestExecutionStatus", status);
         }
+
+        public List<IAutoHeaderParser> AutoHeaders { get => _autoHeaders; set { } }
     }
 }

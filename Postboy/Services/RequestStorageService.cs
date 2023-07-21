@@ -54,6 +54,10 @@ namespace Postboy.Services
             }
             catch (Exception ex)
             {
+                if (File.Exists(AppStateFile))
+                {
+                    File.Move(AppStateFile, $"{AppStateFolder}{Path.DirectorySeparatorChar}appstate.BU{DateTime.Today:yy.MM.dd}.json");
+                }
                 WriteNewState();
                 return await ReadState(true);
             }
@@ -74,6 +78,10 @@ namespace Postboy.Services
         public async Task<bool> Create(StoredRequest request)
         {
             var state = await ReadState();
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                throw new Exception("Request name must not be empty");
+            }
             if (state.Requests.Any(r => r.Name == request.Name))
             {
                 throw new Exception($"Request with name {request.Name} already exists");

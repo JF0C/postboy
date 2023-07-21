@@ -40,4 +40,6 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
+System.Diagnostics.Process.Start("explorer.exe", $"http://localhost:{builder.Configuration["ApplicationPort"]}");
+
 app.Run();
