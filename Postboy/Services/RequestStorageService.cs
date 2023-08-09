@@ -56,7 +56,7 @@ namespace Postboy.Services
             {
                 if (File.Exists(AppStateFile))
                 {
-                    File.Move(AppStateFile, $"{AppStateFolder}{Path.DirectorySeparatorChar}appstate.BU{DateTime.Today:yy.MM.dd}.json");
+                    File.Move(AppStateFile, $"{AppStateFolder}{Path.DirectorySeparatorChar}appstate.BU{DateTime.Today:yy.MM.dd HH:mm:ss.fff}.json");
                 }
                 WriteNewState();
                 return await ReadState(true);

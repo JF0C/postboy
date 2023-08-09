@@ -3,6 +3,7 @@ using Postboy.Data.ContentTypes;
 using Postboy.Helpers;
 using Postboy.Services.AutoHeaderParser;
 using System.Net;
+using System.Text.Json;
 
 namespace Postboy.Services
 {
@@ -56,7 +57,15 @@ namespace Postboy.Services
                 }
                 if (request.ContentType is ContentTypeJson)
                 {
-                    httpRequest.Content = JsonContent.Create(request.Body ?? "");
+                    try
+                    {
+                        var obj = JsonSerializer.Deserialize<dynamic>(request.Body);
+                        httpRequest.Content = JsonContent.Create(obj ?? "");
+                    }
+                    catch (JsonException ex)
+                    {
+                        SetStatus($"invalid json object as request body");
+                    }
                 }
                 else if (request.ContentType is ContentTypeFormEncoded)
                 {
