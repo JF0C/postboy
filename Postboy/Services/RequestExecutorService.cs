@@ -9,9 +9,12 @@ namespace Postboy.Services
 {
     public class RequestExecutorService : IRequestExecutorService
     {
+        private record CachedAuthHeader (string Key, string Value, DateTime Expires);
+
         private readonly IRequestStorageService _storage;
         private readonly IComponentInteractionService _intercom;
         private readonly List<IAutoHeaderParser> _autoHeaders;
+        private readonly Dictionary<Guid, CachedAuthHeader> _cachedHeaders = new();
         public RequestExecutorService(IRequestStorageService storage, IComponentInteractionService intercom)
         {
             _storage = storage;
@@ -23,7 +26,11 @@ namespace Postboy.Services
                 .Where(p => p is not null)
                 .ToList()!;
         }
-        public async Task<HttpResponseMessage> Execute(StoredRequest request, bool evaluateAutoHeaders = true)
+        public async Task<HttpResponseMessage> Execute(StoredRequest request)
+        {
+            return await ExecuteInternal(request, evaluateAutoHeaders: true, reloadAutoheaders: false);
+        }
+        private async Task<HttpResponseMessage> ExecuteInternal(StoredRequest request, bool evaluateAutoHeaders = true, bool reloadAutoheaders = false)
         {
             try
             {
@@ -44,10 +51,10 @@ namespace Postboy.Services
                 {
                     foreach (var autoHeader in request.AutoHeaders)
                     {
-                        var kv = await EvaluateAutoHeader(autoHeader);
-                        if (kv is not null)
+                        var header = await EvaluateAutoHeaderCached(autoHeader, request.Id, reloadAutoheaders);
+                        if (header is not null)
                         {
-                            httpRequest.Headers.Add(kv.Value.key, kv.Value.value);
+                            httpRequest.Headers.Add(header.Key, header.Value);
                         }
                     }
                 }
@@ -72,10 +79,14 @@ namespace Postboy.Services
                     httpRequest.Content = ContentConversion.StringToFormContent(request.Body);
                 }
                 var response = await client.SendAsync(httpRequest);
-                var cookies = cookieContainer.GetCookies(new Uri(request.Url));
+                if (!response.IsSuccessStatusCode && !reloadAutoheaders)
+                {
+                    return await ExecuteInternal(request, true, true);
+                }
+                var cookies = cookieContainer.GetAllCookies();
                 if (cookies is not null && cookies.Count > 0)
                 {
-                    response.Headers.Add("Set-Cookie", cookies.Aggregate("", (a, b) => a + b + ";").TrimEnd(';'));
+                    response.Headers.Add("Set-Cookie", cookies.Aggregate("", (a, b) => $"{a}{b.Name}={b.Value};expires={b.Expires};").TrimEnd(';'));
                 }
                 return response;
 
@@ -93,26 +104,41 @@ namespace Postboy.Services
             }
         }
 
-        private async Task <(string key, string value)?> EvaluateAutoHeader(AutoHeader autoHeader)
+        private async Task <CachedAuthHeader?> EvaluateAutoHeaderCached(AutoHeader autoHeader, Guid requestId, bool forceReload)
         {
-            SetStatus($"Loading: {autoHeader.Type}");
+            var parser = _autoHeaders.FirstOrDefault(a => a.Guid == autoHeader.Type);
+            SetStatus($"Loading: {parser?.Name ?? "Autoheader"}");
+            if (_cachedHeaders.TryGetValue(requestId, out var cachedHeader))
+            {
+                if (cachedHeader.Expires > DateTime.Now && !forceReload)
+                {
+                    return cachedHeader;
+                }
+                else
+                {
+                    _cachedHeaders.Remove(requestId);
+                }
+            }
             var request = await _storage.GetById(autoHeader.RequestId);
             if (request == null)
             {
                 return null;
             }
-            var response = await Execute(request, false);
-            return await ParseHeaderValue(autoHeader.Type, response);
+            var response = await ExecuteInternal(request, false);
+            var header = await ParseHeaderValue(autoHeader.Type, response);
+            _cachedHeaders.Add(requestId, header);
+            return header;
         }
 
-        private async Task<(string, string)> ParseHeaderValue(Guid type, HttpResponseMessage message)
+        private async Task<CachedAuthHeader> ParseHeaderValue(Guid type, HttpResponseMessage message)
         {
             var parser = _autoHeaders.FirstOrDefault(a => a?.Guid == type);
             if (parser is null)
             {
                 throw new NotImplementedException($"No parser could be found for header type {type}");
             }
-            return await parser.ParseHeader(message);
+            var parsedResult = await parser.ParseHeader(message);
+            return new(parsedResult.Key, parsedResult.Value, parsedResult.Expiration);
         }
 
         private void SetStatus(string status)

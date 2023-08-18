@@ -6,6 +6,6 @@
 
         public Guid Guid { get; set; }
 
-        public Task<(string Key, string Value)> ParseHeader(HttpResponseMessage responseMessage);
+        public Task<(string Key, string Value, DateTime Expiration)> ParseHeader(HttpResponseMessage responseMessage);
     }
 }

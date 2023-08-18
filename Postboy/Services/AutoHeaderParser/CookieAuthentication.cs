@@ -7,10 +7,28 @@
         public string Name { get => _name; set { } } 
 
         public Guid Guid { get => _guid; set { } }
-        public Task<(string Key, string Value)> ParseHeader(HttpResponseMessage responseMessage)
+        public Task<(string Key, string Value, DateTime Expiration)> ParseHeader(HttpResponseMessage responseMessage)
         {
-            var val = responseMessage.Headers.FirstOrDefault(h => h.Key.ToLower() == "set-cookie").Value;
-            return Task.FromResult(("Cookie", val?.FirstOrDefault() ?? ""));
+            var val = responseMessage.Headers.FirstOrDefault(h => h.Key.ToLower() == "set-cookie").Value.FirstOrDefault();
+            if (val == null)
+            {
+                return Task.FromResult(("Cookie", "", DateTime.Now));
+            }
+            var components = val.Split(';');
+            var value = "";
+            var expiration = DateTime.Now;
+            foreach(var c in components)
+            {
+                if (c.StartsWith("expires="))
+                {
+                    expiration = DateTime.Parse(c.Replace("expires=", ""));
+                }
+                else
+                {
+                    value = c;
+                }
+            }
+            return Task.FromResult(("Cookie", value, expiration));
         }
     }
 }

@@ -11,11 +11,11 @@ namespace Postboy.Services.AutoHeaderParser
 
         public Guid Guid { get => _guid; set { } }
 
-        public async Task<(string Key, string Value)> ParseHeader(HttpResponseMessage responseMessage)
+        public async Task<(string Key, string Value, DateTime Expiration)> ParseHeader(HttpResponseMessage responseMessage)
         {
             var content = await responseMessage.Content.ReadAsStringAsync();
             var token = JsonSerializer.Deserialize<TokenResponseDto>(content);
-            return ("Authorization", $"Bearer {token?.AccessToken}");
+            return ("Authorization", $"Bearer {token?.AccessToken}", DateTime.Now + TimeSpan.FromSeconds(token?.ExpiresIn ?? 0));
         }
     }
 }
