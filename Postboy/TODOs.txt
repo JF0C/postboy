@@ -1,6 +1,6 @@
 add readme
 multiple write attempts lead to non-critical error
 newly created folders do not show up
-cache authorization data for requests
 write tests
 enable autoheader parser extensions
+history for storedRequests -> enable restoration previous versions of a stored request
