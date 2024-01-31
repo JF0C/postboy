@@ -1,6 +1,7 @@
 add readme
 multiple write attempts lead to non-critical error
-newly created folders do not show up
+newly created folders do not show up until reload
 write tests
 enable autoheader parser extensions
 history for storedRequests -> enable restoration previous versions of a stored request
+export queries as .http files
